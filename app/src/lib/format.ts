@@ -79,3 +79,8 @@ export function parseAmount(value: string): bigint {
     return 0n;
   }
 }
+
+/** Shortens every 0x address inside free text to 0x1234…abcd, keeping the rest of the text. */
+export function shortenAddresses(text: string): string {
+  return text.replace(/0x[0-9a-fA-F]{40}/g, (a) => `${a.slice(0, 6)}…${a.slice(-4)}`);
+}

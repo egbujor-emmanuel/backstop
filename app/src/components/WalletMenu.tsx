@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useConnect, type Connector } from "wagmi";
 import { mezoTestnet } from "../lib/wagmi";
 
@@ -28,6 +29,12 @@ export function WalletMenu() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
+  const { pathname } = useLocation();
+
+  // Leaving the page closes the menu, so it never covers the next page's content.
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   // EIP-6963 wallets carry an rdns id; the generic injected connector is only a fallback for older
   // wallets that do not announce themselves.

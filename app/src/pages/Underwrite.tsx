@@ -101,7 +101,7 @@ export default function Underwrite() {
         <Panel>
           <h2 className="font-display text-3xl">Deposit</h2>
           <div className="mt-6 flex flex-col gap-4">
-            <Field label="Amount (MUSD)" hint={`Wallet balance: ${musd(balance)} MUSD`}>
+            <Field label="Amount (MUSD)" hint={address ? `Wallet balance: ${musd(balance)} MUSD` : "Connect a wallet to see your balance."}>
               <input className={inputClass} inputMode="decimal" value={amount} onChange={(e) => setAmount(sanitizeAmount(e.target.value))} />
             </Field>
             <TxButton steps={depositSteps} disabled={deposit === 0n || (balance !== undefined && deposit > balance)} onDone={refresh}>
@@ -112,6 +112,13 @@ export default function Underwrite() {
 
         <Panel>
           <h2 className="font-display text-3xl">Your position</h2>
+          {!address && (
+            <p className="mt-6 text-sm text-muted">
+              Connect a wallet to see your shares, what they are worth and what you can withdraw.
+            </p>
+          )}
+          {address && (
+          <>
           <dl className="mt-6 grid grid-cols-2 gap-4 text-sm">
             <dt className="text-muted">Shares</dt>
             <dd className="num text-right">{shares !== undefined ? musd(shares / 10n ** 6n, 4) : "—"} bsMUSD</dd>
@@ -141,6 +148,8 @@ export default function Underwrite() {
               Withdraw {musd(maxWithdraw, 2)} MUSD
             </TxButton>
           </div>
+          </>
+          )}
         </Panel>
       </div>
       <div className="mt-6 max-w-xl">

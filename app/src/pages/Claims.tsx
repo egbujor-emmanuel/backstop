@@ -58,6 +58,11 @@ export default function Claims() {
         Winning voters share the
         assessor pool ({musd(rewardPool, 4)} MUSD now) and the bonds of rejected claims.
       </p>
+      <p className="mt-3 max-w-3xl text-sm text-dim">
+        On testnet the claims so far are drills: the claimant and both voting locks (veMEZO #952 and #953) belong to the
+        team, the vote lasts one hour and the quorum is a fixed 60 veMEZO. Any veMEZO holder can vote on an open claim from
+        this page. For mainnet the vote runs at least three days and the quorum becomes a share of all veMEZO voting power.
+      </p>
 
       <section aria-labelledby="list" className="mt-12">
         <h2 id="list" className="sr-only">Claims</h2>
@@ -309,7 +314,9 @@ function RewardForm({ claimIds, onDone }: { claimIds: bigint[]; onDone: () => vo
       <Field label="veMEZO lock id that voted">
         <input className={inputClass} inputMode="numeric" value={token} onChange={(e) => setToken(e.target.value.replace(/[^0-9]/g, ""))} />
       </Field>
-      <p className="text-sm text-muted">Pending: <span className="num text-paper">{musd(pending.data, 4)} MUSD</span></p>
+      {claimId !== "" && token !== "" && (
+        <p className="text-sm text-muted">Pending: <span className="num text-paper">{musd(pending.data, 4)} MUSD</span></p>
+      )}
       <TxButton
         variant="ghost"
         disabled={!pending.data}

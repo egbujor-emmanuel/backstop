@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Eyebrow, Panel, Stat, TxLink } from "../components/ui";
 import { LivePolicyCard } from "../components/LivePolicyCard";
 import { usePoolStats, usePolicies, useClaims } from "../hooks/useProtocol";
+import { useLedger } from "../hooks/useLedger";
 import { bps, compact, usd } from "../lib/format";
 import { gsap, prefersReducedMotion, useGSAP, useReveal } from "../lib/motion";
 import exploit from "../data/oct5_exploit_positions.json";
@@ -47,6 +48,8 @@ const PRIMITIVES = [
 export default function Home() {
   const root = useRef<HTMLDivElement>(null);
   const { stats } = usePoolStats();
+  const ledger = useLedger();
+  const outside = ledger.data?.filter((w) => !w.team).length;
   const { policies } = usePolicies();
   const { claims } = useClaims();
   useReveal(root);
@@ -106,12 +109,13 @@ export default function Home() {
 
       {/* Live numbers */}
       <section aria-label="Live pool numbers" className="border-y border-line bg-panel/60">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-8 sm:px-6 lg:grid-cols-5">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-8 sm:grid-cols-3 sm:px-6 lg:grid-cols-6">
           <Stat label="Pool capital" value={compact(stats?.totalAssets)} unit="MUSD" />
           <Stat label="Parked in sMUSD" value={compact(stats?.parked)} unit="MUSD" />
           <Stat label="Active cover" value={compact(stats?.activeCover)} unit="MUSD" />
           <Stat label="Utilization" value={bps(stats?.utilizationBps)} />
           <Stat label="Policies · claims" value={`${policies.length} · ${claims.length}`} hint="read live from chain 31611" />
+          <Stat label="Outside wallets" value={outside === undefined ? "…" : String(outside)} hint="not run by the team · see Proof" />
         </div>
       </section>
 

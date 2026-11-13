@@ -70,7 +70,7 @@ import json,sys
 r=json.load(sys.stdin)
 mint='0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
 ids=[int(l['topics'][3],16) for l in r['logs'] if l['topics'][0]==mint and len(l['topics'])==4 and int(l['topics'][1],16)==0]
-print(ids[0])" < /dev/null | tr -d '\r')
+print(ids[0])" | tr -d '\r')
     [ -n "$LOCK_ID" ] || die "could not read the new veBTC token id"
     state_set lockId "$LOCK_ID"
   fi

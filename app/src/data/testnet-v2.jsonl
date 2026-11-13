@@ -20,3 +20,14 @@
 {"label":"assessor reward paid: claim #1, veMEZO #952","tx":"0xa7fe990d01ef43449499d175c080784e7dedf8817877e280215ce62b15dfc2d0","ts":1794572838}
 {"label":"assessor reward paid: claim #1, veMEZO #953","tx":"0xa2b61c2c9c990bcf4a59849d6294e4e9dee1920fdc29c64627cb096e482e6bc2","ts":1794572849}
 {"label":"underwriter requests withdrawal of all shares (1h cooldown)","tx":"0x080f94e1f7841cb6923595b21ed7d9e114fb60f0a58aa8abfafd5deec0bf64d8","ts":1794572885,"source":"recovered from the WithdrawRequested event; the RPC dropped the receipt"}
+{"label":"underwriter withdraws free capital; active cover stays backed","tx":"0x0f458e8560b720888a5a9ffc3c90aa308c0a3d6040db656384c7479c7ea25b89","ts":1794587801}
+{"label":"underwriter approves pool for 150 MUSD (veBTC drill)","tx":"0x9b1842e2876e14c795d3209d1d8b17f96a6de6f5cd4f65c85ac6fc0b3bff9255","ts":1794588624}
+{"label":"underwriter deposits 150 MUSD so the veBTC policy is fully backed","tx":"0x46099df3744064939a01cc8ea226c09bd80a39e4ae2907573ee67cbd96a62ea6","ts":1794588688,"source":"recovered from the Deposit event; the RPC crashed before returning the receipt"}
+{"label":"lock holder approves Mezo veBTC to take 0.002 BTC","tx":"0x5da1c6258c9893b65ef909fcd9cbef79b1b2e98c0c35bd1ae7d7f40024c553bf","ts":1794588700}
+{"label":"lock holder locks 0.002 BTC in Mezo's veBTC for 28 days","tx":"0x59b8210b37d5e082e5d47bb2dee6df4199264713ca6abb58c0727896045590aa","ts":1794588708}
+{"label":"lock holder approves policy manager for the veBTC premium","tx":"0x02fcfb83d90dcb84c18aa2e97d2815c06133d186b9df74c8842631311f319fb4","ts":1794588794}
+{"label":"lock holder insures veBTC lock #426: 100 MUSD, 7 days (policy #8)","tx":"0x7aa44877403c833647b81d5e506a6f373781b2249bf52cedd142fcebd2abb631","ts":1794588806}
+{"label":"lock holder approves claims court for the DRILL-003 bond","tx":"0x84ab0d02dae73b9fbaa1efad1a368ba7deb40616c3ea2d71e8d5c6402b2ac066","ts":1794588838}
+{"label":"DRILL-003: veBTC lock holder files 100 MUSD claim on policy #8","tx":"0x9de6a062803eb94a141387eec3c2df6f9366959c616cf280fb4c8b11d3a150e0","ts":1794588847}
+{"label":"assessor A (veMEZO #952) votes APPROVE on claim #2 (DRILL-003)","tx":"0x604f7b28d6a56a377725f44409d211ac8d5d0866a67218512a15cc4450586053","ts":1794588864}
+{"label":"assessor B (veMEZO #953) votes APPROVE on claim #2 (DRILL-003)","tx":"0x915d569618bfcaf867209e81328d6ff68ddb584598d46a58892bd5a82b3d7f1d","ts":1794588874}

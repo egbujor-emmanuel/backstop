@@ -111,7 +111,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </nav>
           <ConnectButton />
         </div>
-        <nav aria-label="Main mobile" className="flex gap-1 overflow-x-auto px-4 pb-2 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
+        <nav aria-label="Main mobile" className="flex flex-wrap gap-1 px-4 pb-2 lg:hidden">
           {NAV.map((n) => (
             <NavLink
               key={n.to}

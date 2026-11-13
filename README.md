@@ -71,8 +71,17 @@ Today the protocol's treasury is the only backstop for Mezo users. BACKSTOP turn
 who want protection pay a premium, people who want yield carry the risk, and people with long-term skin in Mezo (veMEZO
 holders) decide what is a valid claim.
 
-None of the 150 Mezo Buildathon submissions offers cover, and no existing cover protocol covers positions on the Mezo
-chain.
+We read all 155 Buildathon products through AKINDO's public API on 2026-11-13. No other submission sells cover against
+contract exploits, chain halts or bridge failure, and none lets veMEZO holders decide claims. We also found no existing
+cover protocol that covers positions on the Mezo chain. The nearest projects solve different problems:
+
+| Project | What it protects | Who decides a payout | How BACKSTOP differs |
+|---|---|---|---|
+| Surety | Lenders in its own credit vault, against borrower default | Automatic loss accounting | BACKSTOP covers exploits and halts, which a loss formula cannot see. A lender in a credit vault still carries the risk of a veBTC or lending-market exploit, which BACKSTOP can cover. |
+| Sellar | AI-agent payments sent to scam addresses | One reviewer | BACKSTOP is backed by outside underwriters, priced by utilisation, and decided by veMEZO holders. |
+| Lifeline and the trove-rescue projects | Troves close to liquidation | An automatic trigger | They act before a price-driven liquidation. BACKSTOP pays after a protocol failure. |
+| MezGuard | sMUSD savings, by exiting when danger signs appear | An automatic exit | Prevention by leaving. BACKSTOP pays for a loss that already happened. |
+| Roster, Piton | BTC price moves (options) | The market | Price hedges, not cover against protocols failing. |
 
 ## How it works
 
@@ -129,11 +138,17 @@ flowchart LR
 
 ### Why transaction halts go to the court
 
-During the 2026-10-06 halt, Mezo **kept producing blocks** (233 per 15 minutes, as normal) while EVM transactions fell
-to zero or one per 15 minutes from 09:30 to 15:00 UTC. A contract cannot see that kind of halt by watching block times,
-and its own heartbeat cannot land during it. So halt claims go through the court, with
-[`backtest/tx_liveness.py`](backtest/tx_liveness.py) as the evidence tool. This was measured before the design was
-finalised; an earlier block-gap detector was removed because of it (kept for reference in `docs/removed/`).
+During the 2026-10-06 halt (09:27 to 15:00 UTC in Mezo's incident report), Mezo **kept producing blocks** (233 per
+15 minutes, as normal) while EVM transactions fell to zero or one per 15 minutes. Between 09:30 and 15:00 only 10 EVM
+transactions were included, against about 60 every 15 minutes on a normal day, and they came from three senders: one
+Safe multisig call, one protocol system call from the zero address, and eight contract deployments from a single
+address ([`backtest/halt_txs.py`](backtest/halt_txs.py), output in
+[`backtest/oct6_halt_txs.json`](backtest/oct6_halt_txs.json)). No ordinary wallet transacted for five and a half hours.
+
+A contract cannot see that kind of halt by watching block times, and its own heartbeat cannot land during it. So halt
+claims go through the court, with [`backtest/tx_liveness.py`](backtest/tx_liveness.py) and `halt_txs.py` as the
+evidence tools. This was measured before the design was finalised; an earlier block-gap detector was removed because of
+it (kept for reference in `docs/removed/`).
 
 ## Mezo integration
 
@@ -192,6 +207,17 @@ This is the run on the current contracts (v2.2); every row links the full transa
 | 20 | assessor reward paid: claim #1, veMEZO #952 | [`0xa7fe990d…c2d0`](https://explorer.test.mezo.org/tx/0xa7fe990d01ef43449499d175c080784e7dedf8817877e280215ce62b15dfc2d0) |
 | 21 | assessor reward paid: claim #1, veMEZO #953 | [`0xa2b61c2c…6bc2`](https://explorer.test.mezo.org/tx/0xa2b61c2c9c990bcf4a59849d6294e4e9dee1920fdc29c64627cb096e482e6bc2) |
 | 22 | underwriter requests withdrawal of all shares (1h cooldown) | [`0x080f94e1…64d8`](https://explorer.test.mezo.org/tx/0x080f94e1f7841cb6923595b21ed7d9e114fb60f0a58aa8abfafd5deec0bf64d8) |
+| 23 | underwriter withdraws free capital; active cover stays backed | [`0x0f458e85…5b89`](https://explorer.test.mezo.org/tx/0x0f458e8560b720888a5a9ffc3c90aa308c0a3d6040db656384c7479c7ea25b89) |
+| 24 | underwriter approves pool for 150 MUSD (veBTC drill) | [`0x9b1842e2…9255`](https://explorer.test.mezo.org/tx/0x9b1842e2876e14c795d3209d1d8b17f96a6de6f5cd4f65c85ac6fc0b3bff9255) |
+| 25 | underwriter deposits 150 MUSD so the veBTC policy is fully backed | [`0x46099df3…2ea6`](https://explorer.test.mezo.org/tx/0x46099df3744064939a01cc8ea226c09bd80a39e4ae2907573ee67cbd96a62ea6) |
+| 26 | lock holder approves Mezo veBTC to take 0.002 BTC | [`0x5da1c625…53bf`](https://explorer.test.mezo.org/tx/0x5da1c6258c9893b65ef909fcd9cbef79b1b2e98c0c35bd1ae7d7f40024c553bf) |
+| 27 | lock holder locks 0.002 BTC in Mezo's veBTC for 28 days | [`0x59b8210b…90aa`](https://explorer.test.mezo.org/tx/0x59b8210b37d5e082e5d47bb2dee6df4199264713ca6abb58c0727896045590aa) |
+| 28 | lock holder approves policy manager for the veBTC premium | [`0x02fcfb83…9fb4`](https://explorer.test.mezo.org/tx/0x02fcfb83d90dcb84c18aa2e97d2815c06133d186b9df74c8842631311f319fb4) |
+| 29 | lock holder insures veBTC lock #426: 100 MUSD, 7 days (policy #8) | [`0x7aa44877…b631`](https://explorer.test.mezo.org/tx/0x7aa44877403c833647b81d5e506a6f373781b2249bf52cedd142fcebd2abb631) |
+| 30 | lock holder approves claims court for the DRILL-003 bond | [`0x84ab0d02…c066`](https://explorer.test.mezo.org/tx/0x84ab0d02dae73b9fbaa1efad1a368ba7deb40616c3ea2d71e8d5c6402b2ac066) |
+| 31 | DRILL-003: veBTC lock holder files 100 MUSD claim on policy #8 | [`0x9de6a062…50e0`](https://explorer.test.mezo.org/tx/0x9de6a062803eb94a141387eec3c2df6f9366959c616cf280fb4c8b11d3a150e0) |
+| 32 | assessor A (veMEZO #952) votes APPROVE on claim #2 (DRILL-003) | [`0x604f7b28…6053`](https://explorer.test.mezo.org/tx/0x604f7b28d6a56a377725f44409d211ac8d5d0866a67218512a15cc4450586053) |
+| 33 | assessor B (veMEZO #953) votes APPROVE on claim #2 (DRILL-003) | [`0x915d5696…7f1d`](https://explorer.test.mezo.org/tx/0x915d569618bfcaf867209e81328d6ff68ddb584598d46a58892bd5a82b3d7f1d) |
 <!-- PROOF-TABLE:END -->
 
 The machine-readable log is [`proof/testnet-v2.jsonl`](proof/testnet-v2.jsonl), produced by
@@ -242,6 +268,27 @@ For scale: Mezo's H1 2026 report counts 912.6 BTC locked as veBTC and $13.1M of 
 veBTC value (about $3.2M at $70k BTC) were covered at 3% a year, that is about $96,000 of premiums a year, of which
 $9,600 is protocol revenue. The first customers are veBTC holders and borrowers who were exposed on October 5, and
 treasuries that need cover to hold BTC on-chain under a mandate (Mezo Prime's institutional users).
+
+### Capacity and solvency
+
+BACKSTOP cannot sell cover it cannot pay. Every policy is backed 1:1 by underwriting capital when it is bought, and
+underwriters can never withdraw capital that backs a live policy (invariant `invariant_coverAlwaysFullyBacked`, and on
+testnet the underwriter's exit left exactly the 640 MUSD of live cover in the pool). So the pool's size sets how much
+cover exists, not whether claims get paid. Per-product capacity caps keep one exploit from consuming the whole pool.
+
+What covering October 5 would have taken, at the 3% veBTC base rate and the on-chain utilisation curve:
+
+| | Value |
+|---|---|
+| Cover needed for all 37 drained positions | $472,476 |
+| Underwriting capital at 80% utilisation | $590,595 |
+| Premium per year (base rate × 1.85 utilisation multiplier) | $26,270 |
+| Paid to underwriters (85%) | $22,329 a year, 3.78% on capital, plus the sMUSD savings rate on idle capital |
+| Years of premium that one full Oct-5-size loss represents | 18 |
+
+At 3% a year the pool breaks even if an event of that size hits a product less than once every 18 years. Mainnet rates
+will be set per product from loss history and on-chain risk signals (milestone 3), and the utilisation curve raises the
+price automatically as capacity runs out.
 
 ## Next milestones
 

@@ -34,6 +34,7 @@ export const TEAM_WALLETS: Record<string, string> = {
   "0xa0008aa705416a036ad7f6b1b4ba6d7bc26f0cca": "Team · assessor (veMEZO #952)",
   "0xaf744e4cf8877fb3369c435798b7076cb9be7b41": "Team · assessor (veMEZO #953)",
   "0x20b2f696485c647cda7e6f56c8f0d0be3eec4d15": "Team · starter-kit relayer",
+  "0x6b6c2916fd5a8301dfac90c706eddd09960bed01": "Team · starter-kit end-to-end test",
 };
 
 export const EXPLORER = "https://explorer.test.mezo.org";

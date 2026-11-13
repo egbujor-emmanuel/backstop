@@ -5,7 +5,7 @@ import { policyManagerAbi } from "../abi/PolicyManager";
 import { erc20Abi } from "viem";
 import { Eyebrow, Field, Panel, TxButton, inputClass, AddressTag, type TxStep } from "../components/ui";
 import { KIND, STATUS, useMusd, usePolicies, useProducts, usePoolStats } from "../hooks/useProtocol";
-import { dateTime, musd, bps, compact, parseAmount, sanitizeAmount } from "../lib/format";
+import { dateTime, musd, bps, compact, parseAmount, sanitizeAmount, shortenAddresses } from "../lib/format";
 import { useReveal } from "../lib/motion";
 import { StarterKitCard } from "../components/StarterKitCard";
 
@@ -100,7 +100,7 @@ export default function Cover() {
                   <span className="block min-w-0">
                     <span className="block font-medium text-paper">{p.name}</span>
                     <span id={`product-${i}-details`} className="mt-1 block text-xs text-dim [overflow-wrap:anywhere]">
-                      {p.coveredUri}
+                      {shortenAddresses(p.coveredUri)}
                       <span className="sr-only">
                         {" "}
                         {KIND[Number(p.kind)]}. {compact(p.activeCover)} of {compact(p.capacity)} MUSD capacity used.
@@ -150,7 +150,7 @@ export default function Cover() {
                   <span className="text-sm text-muted">Premium</span>
                   <span className="num text-2xl">{premium !== undefined ? musd(premium, 4) : "—"} <span className="text-sm text-dim">MUSD</span></span>
                 </div>
-                <p className="mt-2 text-xs text-dim">85% to underwriters, 5% to veMEZO assessors, 10% protocol fee. Your balance: {musd(balance)} MUSD.</p>
+                <p className="mt-2 text-xs text-dim">85% to underwriters, 5% to veMEZO assessors, 10% protocol fee.{address ? ` Your balance: ${musd(balance)} MUSD.` : ""}</p>
               </div>
               <div id="cover-problems" role="status" aria-live="polite">
                 {problems.length > 0 && (

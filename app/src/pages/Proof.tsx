@@ -1,11 +1,9 @@
 import { useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { usePublicClient } from "wagmi";
-import { parseAbiItem, type Address } from "viem";
+import type { Address } from "viem";
 import { ADDR, DEPLOY_BLOCK, REPO, addrUrl } from "../config";
 import { AddressTag, Eyebrow, Panel, TxLink } from "../components/ui";
-import { teamLabel } from "../lib/format";
 import { useReveal } from "../lib/motion";
+import { useLedger } from "../hooks/useLedger";
 import proofRaw from "../data/testnet-v2.jsonl?raw";
 
 const PROOF = proofRaw
@@ -19,36 +17,6 @@ const CONTRACTS: { name: string; address: Address; role: string }[] = [
   { name: "ClaimsCourt", address: ADDR.court, role: "Claims, bonds, veMEZO-weighted votes, assessor rewards" },
   { name: "StarterKit", address: ADDR.starterKit, role: "One testnet kit per wallet for new visitors" },
 ];
-
-const EVENTS = [
-  { label: "bought cover", address: ADDR.policyManager, event: parseAbiItem("event PolicyBought(uint256 indexed policyId, address indexed holder, uint256 indexed productId, uint256 cover, uint256 premium, uint256 start, uint256 end, uint256 positionId)"), who: "holder" },
-  { label: "underwrote", address: ADDR.pool, event: parseAbiItem("event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares)"), who: "owner" },
-  { label: "filed a claim", address: ADDR.court, event: parseAbiItem("event ClaimFiled(uint256 indexed claimId, uint256 indexed policyId, address indexed claimant, uint256 amount, uint256 incidentAt, uint256 votingEnds, uint256 quorum, string evidenceURI)"), who: "claimant" },
-  { label: "voted as assessor", address: ADDR.court, event: parseAbiItem("event Voted(uint256 indexed claimId, uint256 indexed tokenId, address indexed voter, bool approve, uint256 weight)"), who: "voter" },
-  { label: "got a starter kit", address: ADDR.starterKit, event: parseAbiItem("event KitSent(address indexed to, uint256 musd, uint256 gas)"), who: "to" },
-] as const;
-
-function useLedger() {
-  const client = usePublicClient();
-  return useQuery({
-    queryKey: ["ledger"],
-    enabled: !!client,
-    refetchInterval: 30_000,
-    queryFn: async () => {
-      const wallets = new Map<string, Set<string>>();
-      for (const e of EVENTS) {
-        const logs = await client!.getLogs({ address: e.address, event: e.event, fromBlock: DEPLOY_BLOCK, toBlock: "latest" });
-        for (const log of logs) {
-          const who = (log.args as Record<string, unknown>)[e.who] as string | undefined;
-          if (!who) continue;
-          const key = who.toLowerCase();
-          wallets.set(key, (wallets.get(key) ?? new Set()).add(e.label));
-        }
-      }
-      return [...wallets.entries()].map(([address, actions]) => ({ address, actions: [...actions], team: !!teamLabel(address) }));
-    },
-  });
-}
 
 export default function Proof() {
   const root = useRef<HTMLDivElement>(null);

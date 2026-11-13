@@ -6,6 +6,7 @@ import { usd } from "../lib/format";
 import { useReveal } from "../lib/motion";
 import exploit from "../data/oct5_exploit_positions.json";
 import halt from "../data/oct6_tx_liveness.json";
+import haltTxs from "../data/oct6_halt_txs.json";
 
 /** Base rate of the live veBTC product (3% a year), applied to a 30-day policy. The on-chain quote multiplies this by pool utilisation (1x in a deep pool, up to 5x when full). */
 const RATE = 0.03;
@@ -21,8 +22,66 @@ const BAR = "#c97d16";
 const HALT_START = Date.UTC(2026, 9, 6, 9, 27) / 1000; // Mezo report: transactions halted 09:27 UTC
 const HALT_END = Date.UTC(2026, 9, 6, 15, 0) / 1000; // chain unpaused 15:00 UTC
 
+/** Who the ten transactions inside the halt came from (backtest/halt_txs.py, Mezo mainnet). */
+const HALT_SENDERS = (() => {
+  const by = new Map<string, { from: string; count: number; first: string; kind: string; hash: string }>();
+  for (const t of haltTxs.transactions) {
+    const kind =
+      t.from === "0x0000000000000000000000000000000000000000"
+        ? "protocol system call"
+        : t.to === null
+          ? "contract deployment"
+          : t.selector === "0x6a761202"
+            ? "Safe multisig execTransaction"
+            : "contract call";
+    const prev = by.get(t.from);
+    if (prev) prev.count += 1;
+    else by.set(t.from, { from: t.from, count: 1, first: t.time, kind, hash: t.hash });
+  }
+  return [...by.values()];
+})();
+
 function hhmm(t: number): string {
   return new Date(t * 1000).toISOString().slice(11, 16);
+}
+
+function HaltSenders() {
+  const total = haltTxs.transactions.length;
+  return (
+    <div className="mt-6 rounded-xl border border-line bg-ink p-4">
+      <h3 className="text-sm font-medium text-paper">Who could still transact during the halt</h3>
+      <p className="mt-1 text-sm text-muted">
+        Between 09:30 and 15:00 UTC, Mezo included only <span className="num text-paper">{total}</span> EVM transactions
+        (normally about 60 every 15 minutes), from {HALT_SENDERS.length} senders, and none came from an ordinary wallet. For
+        everyone else the halt lasted five and a half hours, well past the 2-hour trigger of BACKSTOP&apos;s halt cover.
+      </p>
+      <ul className="mt-3 flex flex-col gap-2 text-sm">
+        {HALT_SENDERS.map((s) => (
+          <li key={s.from} className="flex flex-wrap items-baseline justify-between gap-2 border-t border-line pt-2">
+            <span className="text-muted">
+              <span className="num text-paper">{s.count}×</span> {s.kind}, first at <span className="num">{s.first}</span>
+            </span>
+            <a
+              className="num text-xs text-amber underline decoration-amber/40 hover:decoration-amber"
+              href={`${MAINNET_EXPLORER}/tx/${s.hash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {s.from.slice(0, 6)}…{s.from.slice(-4)}
+              <span className="sr-only"> (opens the Mezo mainnet explorer in a new tab)</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-xs text-dim">
+        Listed by{" "}
+        <a className="underline hover:text-amber" href={`${REPO}/blob/main/backtest/halt_txs.py`} target="_blank" rel="noopener noreferrer">
+          backtest/halt_txs.py
+        </a>{" "}
+        from every block {haltTxs.fromBlock}–{haltTxs.toBlock}. A claimant would link this evidence; veMEZO assessors decide.
+      </p>
+    </div>
+  );
 }
 
 function HaltChart() {
@@ -44,10 +103,12 @@ function HaltChart() {
 
   return (
     <figure className="relative">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-labelledby="halt-title halt-desc">
+      <p className="mb-2 text-xs text-dim sm:hidden">Swipe the chart sideways to see the whole day.</p>
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Chart of EVM transactions on October 6">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[640px]" role="img" aria-labelledby="halt-title halt-desc">
         <title id="halt-title">EVM transactions per 15 minutes on Mezo mainnet, October 6, 2026</title>
         <desc id="halt-desc">
-          Blocks kept being produced all day, but EVM transactions fell to zero or one per 15 minutes between about 09:30 and
+          Blocks kept being produced all day, but EVM transactions fell to zero or one per 15 minutes between about 09:27 and
           15:00 UTC, the transaction halt described in Mezo's incident report.
         </desc>
         {/* Halt window annotation */}
@@ -95,6 +156,7 @@ function HaltChart() {
           <text key={b.start} x={tx(b.start)} y={H - 10} fill="#8f8d84" fontSize="11" fontFamily="var(--font-mono)">{hhmm(b.start)}</text>
         ))}
       </svg>
+      </div>
       {h && hover !== null && (
         <div
           className="pointer-events-none absolute top-2 rounded-lg border border-line bg-panel-2 px-3 py-2 text-xs shadow-lg"
@@ -108,9 +170,8 @@ function HaltChart() {
       <figcaption className="mt-3 text-xs text-dim">
         Source: every block from {halt.firstBlock} to {halt.lastBlock} read from Mezo mainnet with{" "}
         <a className="underline hover:text-amber" href={`${REPO}/blob/main/backtest/tx_liveness.py`} target="_blank" rel="noopener noreferrer">backtest/tx_liveness.py</a>.
-        Longest stretch with no EVM transaction: {Math.round(halt.longestEmpty.seconds / 60)} minutes, blocks{" "}
-        {halt.longestEmpty.fromBlock}–{halt.longestEmpty.toBlock}.
       </figcaption>
+      <HaltSenders />
       <details className="mt-3 text-sm">
         <summary className="cursor-pointer text-muted hover:text-paper">Show the data as a table</summary>
         <div className="mt-3 max-h-72 overflow-auto">
@@ -160,7 +221,8 @@ export default function Replay() {
           With a 30-day BACKSTOP veBTC policy, each holder would have paid the premium shown, and after a claim approved by
           veMEZO assessors been repaid in MUSD from the pool, instead of waiting on the protocol's treasury.
         </p>
-        <div className="mt-6 overflow-x-auto" tabIndex={0} role="region" aria-labelledby="positions">
+        <p className="mt-6 text-xs text-dim sm:hidden">Swipe the table sideways to see BTC lost, value and premium.</p>
+        <div className="mt-2 overflow-x-auto sm:mt-6" tabIndex={0} role="region" aria-labelledby="positions">
           <table className="w-full min-w-[720px] text-left text-sm">
             <caption className="sr-only">veBTC positions hit by the October 5 exploit, with the premium a 30-day policy would have cost</caption>
             <thead className="text-xs uppercase tracking-wider text-dim">
