@@ -8,3 +8,9 @@ node_modules/
 app/dist/
 .vercel
 contracts/broadcast/**/*.lock
+video/assets/raw/
+video/capture/node_modules/
+video/capture/*.png
+video/contact*.png
+video/grid*.png
+.playwright-mcp/

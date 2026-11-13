@@ -13,3 +13,10 @@
 {"label":"assessor B (veMEZO #953) votes APPROVE on claim #0","tx":"0x6b512c8e39eee57af8a7d11240e9c9eeed62c12a3c8e0c5e9b5f2e3298b678a1","ts":1794569225}
 {"label":"assessor A (veMEZO #952) votes REJECT on claim #1","tx":"0xf0a450a9c635058127d172b3df80630af1db86a42373ecdab7e7c89d57f78a65","ts":1794569236}
 {"label":"assessor B (veMEZO #953) votes REJECT on claim #1","tx":"0x6d136b6c06942f984a8206138480166fc665843561223595516f787262a6a1d3","ts":1794569246}
+{"label":"finalize claim #0 (DRILL-001): approved, 150 MUSD paid","tx":"0xcb44c10306ac924a2f974abe596d0baeabcd898f78ea9a8c7017ed2590e7657a","ts":1794572790}
+{"label":"finalize claim #1 (DRILL-002): rejected, bond to assessors","tx":"0xbde26f5711c4f6c64114ba2f871f4e01b8717188e0037458ad70d820b636661d","ts":1794572801}
+{"label":"assessor reward paid: claim #0, veMEZO #952","tx":"0x9017e1d67c945189ce87edb1dd789cecab17f613c8a104c1476fd008e8896928","ts":1794572811}
+{"label":"assessor reward paid: claim #0, veMEZO #953","tx":"0x8754e81caacfdedb8fce170bd6d566a5ba9903538193c0c75358a582e94117c1","ts":1794572826}
+{"label":"assessor reward paid: claim #1, veMEZO #952","tx":"0xa7fe990d01ef43449499d175c080784e7dedf8817877e280215ce62b15dfc2d0","ts":1794572838}
+{"label":"assessor reward paid: claim #1, veMEZO #953","tx":"0xa2b61c2c9c990bcf4a59849d6294e4e9dee1920fdc29c64627cb096e482e6bc2","ts":1794572849}
+{"label":"underwriter requests withdrawal of all shares (1h cooldown)","tx":"0x080f94e1f7841cb6923595b21ed7d9e114fb60f0a58aa8abfafd5deec0bf64d8","ts":1794572885,"source":"recovered from the WithdrawRequested event; the RPC dropped the receipt"}

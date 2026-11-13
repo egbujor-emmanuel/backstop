@@ -72,7 +72,7 @@ export default function Home() {
       <section aria-labelledby="hero" className="relative grain">
         <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-16 sm:px-6 sm:pt-24">
           <Eyebrow>Live on Mezo testnet · MUSD cover</Eyebrow>
-          <h1 id="hero" aria-label={headline.join(" ")} className="mt-6 max-w-4xl font-display text-[clamp(2.8rem,1.2rem+6vw,6.5rem)] leading-[0.95] tracking-tight">
+          <h1 id="hero" aria-label={headline.join(" ")} className="mt-6 max-w-4xl font-display xl:max-w-[44rem] text-[clamp(2.8rem,1.2rem+6vw,6.5rem)] leading-[0.95] tracking-tight">
             {headline.map((w, i) => (
               <span key={i} aria-hidden className="inline-block overflow-hidden pb-2 align-bottom">
                 <span data-hero-word className={`inline-block pr-[0.25em] ${w === "covered." ? "italic text-amber" : ""}`}>

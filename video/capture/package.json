@@ -1,0 +1,10 @@
+{
+  "name": "backstop-demo-capture",
+  "private": true,
+  "type": "module",
+  "description": "Records the BACKSTOP walkthrough footage from the live app with a scripted testnet wallet.",
+  "dependencies": {
+    "playwright-core": "^1.49.1",
+    "viem": "^2.21.54"
+  }
+}

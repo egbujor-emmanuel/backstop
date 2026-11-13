@@ -1,0 +1,62 @@
+{
+  "voice": "am_michael",
+  "style": "Plain-words walkthrough: what BACKSTOP is, then each step a user takes in the real app. Target under 2:00 (judges cap Materials above ~2:15).",
+  "sources": {
+    "s1": "README 'Why this exists': 37 positions drained, $472,476 at Mezo's oracle; Mezo repaid every holder from protocol-owned funds",
+    "s2": "README intro: insurance for Mezo positions, paid in MUSD",
+    "s3": "Layout ConnectButton; StarterKit: 20 test MUSD plus gas, one per wallet; faucet.test.mezo.org",
+    "s4": "Cover page: product, cover, days, premium quote, 'Approve and buy cover', policy is a soulbound NFT",
+    "s5": "BackstopPool: 85% of premiums to underwriters; idle MUSD earns the sMUSD savings rate",
+    "s6": "ClaimsCourt.fileClaim: amount <= cover, evidence link, bond 1% (min 1 MUSD), refunded unless rejected",
+    "s7": "ClaimsCourt: veMEZO-weighted vote, APPROVAL_BPS 6000 on testnet, payout from the pool, winning voters share the reward",
+    "s8": "Proof page: contracts (Sourcify) and every lifecycle transaction (proof/testnet-v2.jsonl)",
+    "s9": "Home headline"
+  },
+  "scenes": [
+    {
+      "id": "s1",
+      "tts": "On October fifth, an attacker drained thirty-seven locked bitcoin positions on Mezo, worth about four hundred seventy thousand dollars. Mezo paid everyone back from its own funds.",
+      "caption": "On October 5, an attacker drained 37 locked bitcoin positions on Mezo, worth about $470,000. Mezo paid everyone back from its own funds."
+    },
+    {
+      "id": "s2",
+      "tts": "Backstop is insurance for your money on Mezo. You pay a small fee. If something goes wrong, you get paid back in M U S D, Mezo's dollar.",
+      "caption": "BACKSTOP is insurance for your money on Mezo. You pay a small fee. If something goes wrong, you get paid back in MUSD, Mezo's dollar."
+    },
+    {
+      "id": "s3",
+      "tts": "Step one. Open the app and connect your wallet. It switches you to Mezo testnet for you.",
+      "caption": "Step 1. Open the app and connect your wallet. It switches you to Mezo testnet for you."
+    },
+    {
+      "id": "s4",
+      "tts": "Step two. Pick what you want to protect, type how much, and for how many days. The app shows your price. Approve, buy, and your policy appears, tied to your wallet.",
+      "caption": "Step 2. Pick what you want to protect, type how much, and for how many days. The app shows your price. Approve, buy, and your policy appears, tied to your wallet."
+    },
+    {
+      "id": "s5",
+      "tts": "Want to earn instead? Step three. Deposit M U S D into the pool. You earn the fees buyers pay, plus Mezo's savings interest while your money waits.",
+      "caption": "Want to earn instead? Step 3. Deposit MUSD into the pool. You earn the fees buyers pay, plus Mezo's savings interest while your money waits."
+    },
+    {
+      "id": "s6",
+      "tts": "If something goes wrong, step four. File a claim. Say how much you lost, link your proof, and put down a small deposit, which you get back unless the claim is rejected.",
+      "caption": "If something goes wrong, step 4. File a claim. Say how much you lost, link your proof, and put down a small deposit, which you get back unless the claim is rejected."
+    },
+    {
+      "id": "s7",
+      "tts": "Step five. People who hold veMEZO, Mezo's long-term voters, check the proof and vote. If at least sixty percent say yes, the pool pays you, and the voters who got it right share a reward.",
+      "caption": "Step 5. People who hold veMEZO, Mezo's long-term voters, check the proof and vote. If at least 60% say yes, the pool pays you, and the voters who got it right share a reward."
+    },
+    {
+      "id": "s8",
+      "tts": "Everything you just saw is real, on Mezo testnet. The proof page lists every contract and every transaction, so anyone can check it.",
+      "caption": "Everything you just saw is real, on Mezo testnet. The Proof page lists every contract and every transaction, so anyone can check it."
+    },
+    {
+      "id": "s9",
+      "tts": "Backstop. When Mezo has a bad day, you're covered.",
+      "caption": "BACKSTOP. When Mezo has a bad day, you're covered."
+    }
+  ]
+}
