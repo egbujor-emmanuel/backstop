@@ -16,15 +16,17 @@ export function LivePolicyCard({ policyId }: { policyId: bigint }) {
     args: [policyId],
   });
 
-  const image = useMemo(() => {
+  const { image, description } = useMemo(() => {
     const raw = uri.data;
     const prefix = "data:application/json;base64,";
-    if (!raw || !raw.startsWith(prefix)) return undefined;
+    if (!raw || !raw.startsWith(prefix)) return { image: undefined, description: undefined };
     try {
-      const json = JSON.parse(atob(raw.slice(prefix.length))) as { image?: string };
-      return json.image?.startsWith("data:image/svg+xml;base64,") ? json.image : undefined;
+      const json = JSON.parse(atob(raw.slice(prefix.length))) as { image?: string; name?: string; description?: string };
+      const ok = json.image?.startsWith("data:image/svg+xml;base64,");
+      const text = [json.name, json.description].filter((v): v is string => typeof v === "string" && v.length > 0).join(". ");
+      return { image: ok ? json.image : undefined, description: text || undefined };
     } catch {
-      return undefined;
+      return { image: undefined, description: undefined };
     }
   }, [uri.data]);
 
@@ -33,9 +35,9 @@ export function LivePolicyCard({ policyId }: { policyId: bigint }) {
       <div className="absolute -inset-6 -z-10 rounded-[2rem] bg-amber/10 blur-3xl" aria-hidden />
       <div className="rotate-[-3deg] overflow-hidden rounded-[18px] border border-line shadow-2xl shadow-black/60 transition-transform duration-500 hover:rotate-0">
         {image ? (
-          <img src={image} alt={`BACKSTOP policy #${policyId} rendered on-chain`} width={400} height={240} className="block w-full" />
+          <img src={image} alt={description ?? `BACKSTOP policy #${policyId}, rendered on-chain`} width={400} height={240} className="block w-full" />
         ) : (
-          <div className="aspect-[5/3] w-full animate-pulse bg-panel-2" />
+          <div role="img" aria-label="Loading the on-chain policy card" className="aspect-[5/3] w-full animate-pulse bg-panel-2" />
         )}
       </div>
       <figcaption className="mt-4 text-xs text-dim">

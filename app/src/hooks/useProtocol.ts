@@ -1,4 +1,5 @@
 import { useReadContract, useReadContracts } from "wagmi";
+import { keepPreviousData } from "@tanstack/react-query";
 import { erc20Abi, type Address } from "viem";
 import { ADDR } from "../config";
 import { backstopPoolAbi } from "../abi/BackstopPool";
@@ -32,7 +33,7 @@ export function usePoolStats() {
       { ...pool, functionName: "freeCapital" },
       { ...pool, functionName: "utilizationBps" },
       { ...pool, functionName: "unvestedPremium" },
-      { address: ADDR.smusd, abi: erc20Abi, functionName: "balanceOf", args: [ADDR.pool] },
+      { ...pool, functionName: "parked" },
       { ...pool, functionName: "totalSupply" },
     ],
     allowFailure: false,
@@ -60,9 +61,10 @@ export function useProducts() {
   const list = useReadContracts({
     contracts: Array.from({ length: n }, (_, i) => ({ ...pm, functionName: "products" as const, args: [BigInt(i)] as const })),
     allowFailure: false,
-    query: { enabled: n > 0, refetchInterval: REFRESH },
+    query: { enabled: n > 0, refetchInterval: REFRESH, placeholderData: keepPreviousData },
   });
-  return { products: list.data ?? [], isLoading: count.isLoading || list.isLoading, refetch: list.refetch };
+  const refetch = () => Promise.all([count.refetch(), list.refetch()]);
+  return { products: list.data ?? [], isLoading: count.isLoading || list.isLoading, refetch };
 }
 
 export function usePolicies() {
@@ -71,10 +73,11 @@ export function usePolicies() {
   const list = useReadContracts({
     contracts: Array.from({ length: n }, (_, i) => ({ ...pm, functionName: "policies" as const, args: [BigInt(i + 1)] as const })),
     allowFailure: false,
-    query: { enabled: n > 0, refetchInterval: REFRESH },
+    query: { enabled: n > 0, refetchInterval: REFRESH, placeholderData: keepPreviousData },
   });
   const policies = (list.data ?? []).map((p, i) => ({ id: BigInt(i + 1), ...p }));
-  return { policies, isLoading: next.isLoading || list.isLoading, refetch: list.refetch };
+  const refetch = () => Promise.all([next.refetch(), list.refetch()]);
+  return { policies, isLoading: next.isLoading || list.isLoading, refetch };
 }
 
 export function useClaims() {
@@ -83,11 +86,12 @@ export function useClaims() {
   const list = useReadContracts({
     contracts: Array.from({ length: n }, (_, i) => ({ ...court, functionName: "claims" as const, args: [BigInt(i)] as const })),
     allowFailure: false,
-    query: { enabled: n > 0, refetchInterval: REFRESH },
+    query: { enabled: n > 0, refetchInterval: REFRESH, placeholderData: keepPreviousData },
   });
   const claims = (list.data ?? []).map((c, i) => ({ id: BigInt(i), ...c }));
   const rewardPool = useReadContract({ ...court, functionName: "rewardPool", query: { refetchInterval: REFRESH } });
-  return { claims, rewardPool: rewardPool.data, isLoading: count.isLoading || list.isLoading, refetch: list.refetch };
+  const refetch = () => Promise.all([count.refetch(), list.refetch(), rewardPool.refetch()]);
+  return { claims, rewardPool: rewardPool.data, isLoading: count.isLoading || list.isLoading, refetch };
 }
 
 export function useMusd(owner: Address | undefined, spender: Address) {

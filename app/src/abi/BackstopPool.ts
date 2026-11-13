@@ -426,6 +426,19 @@ export const backstopPoolAbi = [
  },
  {
   "type": "function",
+  "name": "parked",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
   "name": "payClaim",
   "inputs": [
    {
@@ -822,6 +835,19 @@ export const backstopPoolAbi = [
   "stateMutability": "view"
  },
  {
+  "type": "function",
+  "name": "yieldReadOk",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "ok",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
   "type": "event",
   "name": "Approval",
   "inputs": [
@@ -1114,6 +1140,11 @@ export const backstopPoolAbi = [
  {
   "type": "error",
   "name": "AlreadySet",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "BadConfig",
   "inputs": []
  },
  {

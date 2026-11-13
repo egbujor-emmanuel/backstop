@@ -7,7 +7,7 @@ import { useReveal } from "../lib/motion";
 import exploit from "../data/oct5_exploit_positions.json";
 import halt from "../data/oct6_tx_liveness.json";
 
-/** veBTC cover rate of the live testnet product (3% a year), applied to a 30-day policy. */
+/** Base rate of the live veBTC product (3% a year), applied to a 30-day policy. The on-chain quote multiplies this by pool utilisation (1x in a deep pool, up to 5x when full). */
 const RATE = 0.03;
 const DAYS = 30;
 const PRICE = exploit.btcUsdAtExploit;
@@ -59,7 +59,7 @@ function HaltChart() {
         {ticks.map((t) => (
           <g key={t}>
             <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke="#2a2f2b" strokeWidth={1} />
-            <text x={pad.l - 6} y={y(t) + 4} textAnchor="end" fill="#74726a" fontSize="11" fontFamily="var(--font-mono)">{t}</text>
+            <text x={pad.l - 6} y={y(t) + 4} textAnchor="end" fill="#8f8d84" fontSize="11" fontFamily="var(--font-mono)">{t}</text>
           </g>
         ))}
         {/* Bars: 2px gap, rounded data-end, anchored to baseline */}
@@ -85,17 +85,14 @@ function HaltChart() {
                 fill="transparent"
                 onMouseEnter={() => setHover(i)}
                 onMouseLeave={() => setHover(null)}
-                onFocus={() => setHover(i)}
-                onBlur={() => setHover(null)}
-                tabIndex={0}
-                aria-label={`${hhmm(b.start)} UTC: ${b.evmTxs} EVM transactions in ${b.blocks} blocks`}
+                aria-hidden
               />
             </g>
           );
         })}
-        <line x1={pad.l} x2={W - pad.r} y1={y(0)} y2={y(0)} stroke="#74726a" strokeWidth={1} />
+        <line x1={pad.l} x2={W - pad.r} y1={y(0)} y2={y(0)} stroke="#8f8d84" strokeWidth={1} />
         {buckets.filter((_, i) => i % 8 === 0).map((b) => (
-          <text key={b.start} x={tx(b.start)} y={H - 10} fill="#74726a" fontSize="11" fontFamily="var(--font-mono)">{hhmm(b.start)}</text>
+          <text key={b.start} x={tx(b.start)} y={H - 10} fill="#8f8d84" fontSize="11" fontFamily="var(--font-mono)">{hhmm(b.start)}</text>
         ))}
       </svg>
       {h && hover !== null && (
@@ -118,7 +115,8 @@ function HaltChart() {
         <summary className="cursor-pointer text-muted hover:text-paper">Show the data as a table</summary>
         <div className="mt-3 max-h-72 overflow-auto">
           <table className="w-full text-left text-xs">
-            <thead className="text-dim"><tr><th className="py-1">Window (UTC)</th><th>Blocks</th><th>EVM transactions</th></tr></thead>
+            <caption className="sr-only">EVM transactions and blocks per 15-minute window on October 6, 2026</caption>
+            <thead className="text-dim"><tr><th scope="col" className="py-1">Window (UTC)</th><th scope="col">Blocks</th><th scope="col">EVM transactions</th></tr></thead>
             <tbody>
               {buckets.map((b) => (
                 <tr key={b.start} className="border-t border-line/60">
@@ -152,7 +150,7 @@ export default function Replay() {
       <section aria-label="Totals" className="mt-12 grid grid-cols-2 gap-6 border-y border-line py-8 lg:grid-cols-4">
         <Stat label="BTC drained" value={exploit.totalBtc} />
         <Stat label="Loss at oracle price" value={usd(TOTAL_USD)} hint={`BTC ${usd(PRICE)} at block ${exploit.priceBlock}`} />
-        <Stat label="30-day veBTC cover for all 37" value={usd(TOTAL_PREMIUM)} hint="at the live 3%/yr veBTC rate" />
+        <Stat label="30-day veBTC cover for all 37" value={usd(TOTAL_PREMIUM)} hint="at the 3%/yr veBTC base rate, in a deep pool" />
         <Stat label="Who paid on the day" value="Mezo" hint="from protocol-owned funds" />
       </section>
 
@@ -162,10 +160,11 @@ export default function Replay() {
           With a 30-day BACKSTOP veBTC policy, each holder would have paid the premium shown, and after a claim approved by
           veMEZO assessors been repaid in MUSD from the pool, instead of waiting on the protocol's treasury.
         </p>
-        <div className="mt-6 overflow-x-auto">
+        <div className="mt-6 overflow-x-auto" tabIndex={0} role="region" aria-labelledby="positions">
           <table className="w-full min-w-[720px] text-left text-sm">
+            <caption className="sr-only">veBTC positions hit by the October 5 exploit, with the premium a 30-day policy would have cost</caption>
             <thead className="text-xs uppercase tracking-wider text-dim">
-              <tr><th className="py-2">veBTC id</th><th>Holder</th><th className="text-right">BTC lost</th><th className="text-right">Value</th><th className="text-right">30-day premium</th></tr>
+              <tr><th scope="col" className="py-2">veBTC id</th><th scope="col">Holder</th><th scope="col" className="text-right">BTC lost</th><th scope="col" className="text-right">Value</th><th scope="col" className="text-right">30-day premium</th></tr>
             </thead>
             <tbody>
               {rows.map((p) => {

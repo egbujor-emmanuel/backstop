@@ -30,7 +30,11 @@ window.addEventListener("vite:preloadError", () => {
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 2, staleTime: 8_000 } } });
 
 function Loading() {
-  return <div className="mx-auto max-w-6xl px-6 py-24 text-dim">Loading…</div>;
+  return (
+    <div role="status" className="mx-auto max-w-6xl px-6 py-24 text-dim">
+      Loading…
+    </div>
+  );
 }
 
 createRoot(document.getElementById("root")!).render(

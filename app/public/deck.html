@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BACKSTOP · pitch deck</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="description" content="BACKSTOP: MUSD-underwritten cover for Mezo positions. Claims decided by veMEZO holders." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ===========================================
+   VIEWPORT FITTING: MANDATORY BASE STYLES
+   =========================================== */
+html, body { height: 100%; overflow-x: hidden; }
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+.slide { width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; scroll-snap-align: start;
+  display: flex; flex-direction: column; position: relative; }
+.slide-content { flex: 1; display: flex; flex-direction: column; justify-content: center; max-height: 100%;
+  overflow: hidden; padding: var(--slide-padding); }
+:root {
+  --title-size: clamp(1.5rem, 5vw, 4rem);
+  --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+  --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+  --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+  --small-size: clamp(0.65rem, 1vw, 0.875rem);
+  --slide-padding: clamp(1rem, 4vw, 4rem);
+  --content-gap: clamp(0.5rem, 2vw, 2rem);
+  --element-gap: clamp(0.25rem, 1vw, 1rem);
+}
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: clamp(0.5rem, 1.5vw, 1rem); }
+@media (max-height: 700px) { :root { --slide-padding: clamp(0.75rem, 3vw, 2rem); --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+  --title-size: clamp(1.25rem, 4.5vw, 2.5rem); --h2-size: clamp(1rem, 3vw, 1.75rem); } }
+@media (max-height: 600px) { :root { --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem); --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+  --title-size: clamp(1.1rem, 4vw, 2rem); --body-size: clamp(0.7rem, 1.2vw, 0.95rem); } .nav-dots, .keyboard-hint, .decorative { display: none; } }
+@media (max-height: 500px) { :root { --slide-padding: clamp(0.4rem, 2vw, 1rem); --title-size: clamp(1rem, 3.5vw, 1.5rem);
+  --h2-size: clamp(0.9rem, 2.5vw, 1.25rem); --body-size: clamp(0.65rem, 1vw, 0.85rem); } }
+@media (max-width: 600px) { :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); } .grid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+  html { scroll-behavior: auto; } }
+
+/* ===========================================
+   THEME: BACKSTOP
+   =========================================== */
+:root {
+  --ink: #0b0d0c; --panel: #131614; --line: #2a2f2b; --paper: #ecebe4; --muted: #a3a197; --dim: #8f8d84;
+  --amber: #f5a524; --red: #ff6b4a; --green: #5fd49c;
+  --display: "Instrument Serif", Georgia, serif; --sans: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", monospace;
+}
+body { margin: 0; background: var(--ink); color: var(--paper); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+.stripe { position: absolute; left: 0; right: 0; top: 0; height: clamp(4px, 0.6vh, 8px);
+  background: repeating-linear-gradient(-45deg, var(--amber) 0 10px, transparent 10px 20px); }
+.eyebrow { font-size: var(--small-size); letter-spacing: 0.22em; text-transform: uppercase; color: var(--amber); margin: 0 0 var(--element-gap); }
+h1, h2 { font-family: var(--display); font-weight: 400; letter-spacing: -0.01em; margin: 0; line-height: 1; }
+h1 { font-size: calc(var(--title-size) * 1.6); }
+h2 { font-size: calc(var(--h2-size) * 1.35); max-width: 22ch; }
+h3 { font-family: var(--display); font-weight: 400; font-size: var(--h3-size); margin: 0 0 0.4em; }
+p, li { font-size: var(--body-size); line-height: 1.5; color: var(--muted); }
+.lead { font-size: calc(var(--body-size) * 1.2); max-width: 46ch; margin-top: var(--content-gap); }
+.em { color: var(--amber); font-style: italic; }
+.red { color: var(--red); }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--paper); }
+.big { font-family: var(--mono); font-size: calc(var(--h2-size) * 1.15); color: var(--paper); line-height: 1.1; }
+.label { font-size: var(--small-size); text-transform: uppercase; letter-spacing: 0.14em; color: var(--dim); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: clamp(10px, 1.2vw, 18px); padding: clamp(0.75rem, 1.8vw, 1.6rem); }
+.card p { margin: 0.3em 0 0; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: var(--content-gap); margin-top: var(--content-gap); }
+.row { display: flex; gap: var(--content-gap); align-items: flex-end; flex-wrap: wrap; }
+.list { list-style: none; padding: 0; margin: var(--content-gap) 0 0; display: grid; gap: clamp(0.4rem, 1vh, 1rem); }
+.list li { display: grid; grid-template-columns: minmax(8ch, 14ch) 1fr; gap: var(--element-gap); border-top: 1px solid var(--line); padding-top: clamp(0.3rem, 0.8vh, 0.7rem); }
+.list li b { color: var(--paper); font-weight: 500; }
+.bars { display: flex; align-items: flex-end; gap: 2px; height: clamp(70px, 18vh, 180px); margin-top: var(--content-gap); position: relative; }
+.bars span { flex: 1; background: #c97d16; border-radius: 3px 3px 0 0; min-height: 1px; }
+.halt { position: absolute; top: 0; bottom: 0; background: rgba(236,235,228,0.06); border-left: 1px dashed var(--dim); border-right: 1px dashed var(--dim); }
+.foot { position: absolute; left: var(--slide-padding); right: var(--slide-padding); bottom: clamp(0.5rem, 2vh, 1.4rem);
+  display: flex; justify-content: space-between; font-size: var(--small-size); color: var(--dim); font-family: var(--mono); }
+a { color: var(--amber); }
+
+/* Reveal on enter */
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+.slide.visible .reveal { opacity: 1; transform: none; }
+.slide.visible .reveal:nth-child(2) { transition-delay: 0.08s; }
+.slide.visible .reveal:nth-child(3) { transition-delay: 0.16s; }
+.slide.visible .reveal:nth-child(4) { transition-delay: 0.24s; }
+
+/* Progress + dots */
+.progress { position: fixed; left: 0; bottom: 0; height: 3px; background: var(--amber); width: 0; z-index: 10; transition: width 0.3s; }
+.nav-dots { position: fixed; right: clamp(0.5rem, 1.5vw, 1.5rem); top: 50%; transform: translateY(-50%); display: grid; gap: 8px; z-index: 10; }
+.nav-dots button { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--dim); background: transparent; padding: 0; cursor: pointer; }
+.nav-dots button[aria-current="true"] { background: var(--amber); border-color: var(--amber); }
+.nav-dots button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+
+@media print {
+  @page { size: 1600px 900px; margin: 0; }
+  html, body { height: auto; overflow: visible; }
+  html { scroll-snap-type: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .slide { width: 1600px; height: 900px; page-break-after: always; break-after: page; }
+  .slide:last-of-type { page-break-after: auto; break-after: auto; }
+  .reveal { opacity: 1 !important; transform: none !important; }
+  .progress, .nav-dots, .keyboard-hint { display: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="progress" aria-hidden="true"></div>
+<nav class="nav-dots" aria-label="Slides"></nav>
+<main>
+
+<!-- 1. Title -->
+<section class="slide" aria-label="Title">
+  <div class="stripe decorative"></div>
+  <div class="slide-content">
+    <p class="eyebrow reveal">Mezo Buildathon · Track 1 · live on Mezo testnet</p>
+    <h1 class="reveal">BACKSTOP</h1>
+    <p class="lead reveal">When Mezo has a bad day, <span class="em">you're covered.</span><br />Insurance for Mezo positions, underwritten in MUSD, with claims decided by veMEZO holders.</p>
+    <p class="reveal num" style="margin-top:var(--content-gap)">backstop-pearl.vercel.app · github.com/egbujor-emmanuel/backstop</p>
+  </div>
+</section>
+
+<!-- 2. Problem -->
+<section class="slide" aria-label="The problem">
+  <div class="stripe decorative"></div>
+  <div class="slide-content">
+    <p class="eyebrow reveal">October 5, 2026 · 18:54 UTC</p>
+    <h2 class="reveal">37 veBTC positions. <span class="red">5.52 BTC</span> drained in twelve minutes.</h2>
+    <div class="stats reveal">
+      <div><div class="big">$472,476</div><div class="label">at Mezo's oracle, block 12,311,508</div></div>
+      <div><div class="big">36</div><div class="label">holders hit</div></div>
+      <div><div class="big">~5.5 h</div><div class="label">transaction halt the next day</div></div>
+      <div><div class="big">Mezo</div><div class="label">paid it back from protocol funds</div></div>
+    </div>
+    <p class="lead reveal">Mezo's incident report: "investigating whether there is a class of automated triggers that could have allowed … automated blast prevention."</p>
+  </div>
+  <div class="foot"><span>Source: mezo.org/blog/incident-report-october-5-2026</span><span>02</span></div>
+</section>
+
+<!-- 3. Insight -->
+<section class="slide" aria-label="The insight">
+  <div class="stripe decorative"></div>
+  <div class="slide-content">
+    <p class="eyebrow reveal">The gap</p>
+    <h2 class="reveal">Today the protocol's treasury is the only backstop.</h2>
+    <p class="lead reveal">Every Mezo user carries smart-contract risk with nowhere to hand it off. None of the 150 Buildathon submissions offers cover, and no cover protocol covers positions on the Mezo chain.</p>
+    <p class="lead reveal">BACKSTOP turns that liability into a market: people who want protection pay for it, people who want yield carry it, and people with long-term skin in Mezo decide what is a valid claim.</p>
+  </div>
+  <div class="foot"><span>Submission scan: 150 products, AKINDO API, 2026-11-13</span><span>03</span></div>
+</section>
+
+<!-- 4. Product -->
+<section class="slide" aria-label="How it works">
+  <div class="stripe decorative"></div>
+  <div class="slide-content">
+    <p class="eyebrow reveal">How it works</p>
+    <h2 class="reveal">Three roles. One pot of MUSD.</h2>
+    <div class="grid reveal" style="margin-top:var(--content-gap)">
+      <div class="card"><span class="num" style="color:var(--amber)">01</span><h3>Buyers</h3><p>Insure a veBTC lock, a trove's collateral, Mezo Swap pools, the MEZO bridge or a transaction halt. Premium in MUSD, 2–6% a year.</p></div>
+      <div class="card"><span class="num" style="color:var(--amber)">02</span><h3>Underwriters</h3><p>Deposit MUSD. Earn 85% of premiums plus Mezo's sMUSD savings yield on 90% of idle capital.</p></div>
+      <div class="card"><span class="num" style="color:var(--amber)">03</span><h3>veMEZO assessors</h3><p>Vote on claims, weighted by lock size and length. Share 5% of premiums and the bonds of rejected claims.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>backstop-pearl.vercel.app</span><span>04</span></div>
+</section>
+
+<!-- 5. Mezo integration -->
+<section class="slide" aria-label="Mezo integration">
+  <div class="stripe decorative"></div>
+  <div class="slide-content">
+    <p class="eyebrow reveal">Built from Mezo's own parts</p>
+    <h2 class="reveal">Every MUSD in the system does real work.</h2>
+    <ul class="list reveal">
+      <li><b>MUSD</b><span>Premiums, underwriting capital, claim bonds, payouts, assessor rewards: demand on both sides.</span></li>
+      <li><b>sMUSD</b><span>Idle underwriting capital earns the MUSD savings rate; yield is claimed into the pool.</span></li>
+      <li><b>TroveManager + PriceFeed</b><span>Trove cover requires an active trove, capped by its collateral at MUSD's own price.</span></li>
+      <li><b>veBTC</b><span>Cover checks lock ownership and locked BTC; no over-insurance, even after a sale.</span></li>
+      <li><b>veMEZO</b><span>A new job for MEZO: deciding claims, paid from premiums.</span></li>
+    </ul>
+  </div>
+  <div class="foot"><span>All reads and writes against the real testnet contracts</span><span>05</span></div>
+</section>
+
+<!-- 6. Safety -->
+<section class="slide" aria-label="Safety by construction">
+  <div class="stripe decorative"></div>
+  <div class="slide-content">
+    <p class="eyebrow reveal">Enforced by the contracts</p>
+    <h2 class="reveal">Insurance that can't be farmed.</h2>
+    <ul class="list reveal">
+      <li><b>Fully backed</b><span>No policy larger than free capital; underwriters can't withdraw what backs live cover.</span></li>
+      <li><b>No sniping</b><span>Premiums vest over 7 days; withdrawals wait out a cooldown.</span></li>
+      <li><b>Votes can't be bought late</b><span>Weight is each veMEZO lock's power before filing. 60% supermajority, quorum, minimum voters.</span></li>
+      <li><b>No admin over money</b><span>The owner curates products and pauses sales. It cannot move funds or approve claims.</span></li>
+      <li><b>Claims never lost</b><span>A paused sMUSD defers a payout, never cancels it; anyone can retry.</span></li>
+      <li><b>No circular cover</b><span>MUSD's own core is excluded: MUSD can't insure MUSD.</span></li>
+    </ul>
+  </div>
+  <div class="foot"><span>docs/THREAT_MODEL.md</span><span>06</span></div>
+</section>
+
+<!-- 7. Proof -->
+<section class="slide" aria-label="Proof">
+  <div class="stripe decorative"></div>
+  <div class="slide-content">
+    <p class="eyebrow reveal">Proof, not promises</p>
+    <h2 class="reveal">The whole lifecycle ran on Mezo testnet.</h2>
+    <div class="stats reveal">
+      <div><div class="big">4</div><div class="label">contracts, Sourcify exact match</div></div>
+      <div><div class="big">100 + 6</div><div class="label">unit/fuzz tests + invariants</div></div>
+      <div><div class="big">16,384</div><div class="label">random calls, 0 reverts</div></div>
+      <div><div class="big">1</div><div class="label">fork test on real Mezo contracts</div></div>
+    </div>
+    <p class="lead reveal">Underwriting → 3 policies → an approved claim paid 150 MUSD → a rejected claim's bond paid to assessors → assessor rewards → underwriter exit. Every step is a linked transaction; every wallet is labelled.</p>
+  </div>
+  <div class="foot"><span>proof/testnet-v2.jsonl · 3 independent security reviews, all findings fixed</span><span>07</span></div>
+</section>
+
+<!-- 8. Replay -->
+<section class="slide" aria-label="October replay">
+  <div class="stripe decorative"></div>
+  <div class="slide-content">
+    <p class="eyebrow reveal">Replayed from Mezo mainnet</p>
+    <h2 class="reveal">October 5 cover: <span class="em">$1,165</span>. The loss: $472,476.</h2>
+    <p class="lead reveal">30-day veBTC cover for all 37 drained positions at the 3% base rate, in a deep pool. And on October 6, blocks kept coming while transactions stopped, so halt claims go to the court with on-chain evidence:</p>
+    <div class="reveal" aria-label="EVM transactions per 15 minutes, October 6">
+      <div class="bars" id="bars"><div class="halt" id="halt"></div></div>
+      <div class="row" style="justify-content:space-between"><span class="label">06:00 UTC</span><span class="label">halt 09:27–15:00</span><span class="label">18:00 UTC</span></div>
+    </div>
+  </div>
+  <div class="foot"><span>backtest/tx_liveness.py · blocks 12,321,801–12,332,989</span><span>08</span></div>
+</section>
+
+<!-- 9. Business -->
+<section class="slide" aria-label="Business model">
+  <div class="stripe decorative"></div>
+  <div class="slide-content">
+    <p class="eyebrow reveal">Business model</p>
+    <h2 class="reveal">A fee on every premium.</h2>
+    <ul class="list reveal">
+      <li><b>Protocol</b><span><span class="num">10%</span> of premiums</span></li>
+      <li><b>Assessors</b><span><span class="num">5%</span> of premiums + forfeited bonds</span></li>
+      <li><b>Underwriters</b><span><span class="num">85%</span> of premiums + sMUSD yield</span></li>
+      <li><b>Market</b><span>912.6 BTC locked as veBTC and $13.1M of MUSD loans (Mezo H1 2026). 5% of veBTC value covered at 3% ≈ <span class="num">$96k</span> premiums a year, <span class="num">$9.6k</span> to the protocol.</span></li>
+      <li><b>First buyers</b><span>veBTC holders and borrowers exposed on Oct 5; treasuries that need cover to hold BTC on-chain.</span></li>
+    </ul>
+  </div>
+  <div class="foot"><span>Illustrative at BTC $70k</span><span>09</span></div>
+</section>
+
+<!-- 10. Roadmap -->
+<section class="slide" aria-label="Roadmap">
+  <div class="stripe decorative"></div>
+  <div class="slide-content">
+    <p class="eyebrow reveal">What's next</p>
+    <h2 class="reveal">From testnet to the backstop Mezo deserves.</h2>
+    <ul class="list reveal">
+      <li><b>Dec 2026</b><span>Independent audit; claim-assessment guidelines with worked October 5 examples.</span></li>
+      <li><b>Q1 2027</b><span>Capped mainnet pool with veBTC and trove products, via Mezo's Ignition Program.</span></li>
+      <li><b>Q2 2027</b><span>Cover for community protocols, priced from on-chain risk signals; protocols buy cover for their users.</span></li>
+    </ul>
+    <p class="lead reveal">Try it: <a href="https://backstop-pearl.vercel.app">backstop-pearl.vercel.app</a> · Code: <a href="https://github.com/egbujor-emmanuel/backstop">github.com/egbujor-emmanuel/backstop</a></p>
+  </div>
+  <div class="foot"><span>BACKSTOP</span><span>10</span></div>
+</section>
+
+</main>
+<script>
+/* Oct 6 EVM transactions per 15 minutes, 06:00–18:00 UTC, from backtest/oct6_tx_liveness.json */
+const TXS = [12,2,3,1,3,2,3,2,10,0,7,19,61,3,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,7,1,0,0,0,0,19,5,24,8,10,27,13,13,4,9,1,7];
+(function drawBars() {
+  const el = document.getElementById("bars");
+  const max = Math.max(...TXS, 1);
+  TXS.forEach((v) => {
+    const s = document.createElement("span");
+    s.style.height = (v / max) * 100 + "%";
+    el.appendChild(s);
+  });
+  const halt = document.getElementById("halt");
+  const start = (3 * 60 + 27) / (12 * 60), end = (9 * 60) / (12 * 60); // 09:27 and 15:00 within 06:00–18:00
+  halt.style.left = start * 100 + "%";
+  halt.style.width = (end - start) * 100 + "%";
+})();
+
+/* Presentation controller: keyboard, wheel, touch, dots, progress, reveal */
+class Deck {
+  constructor() {
+    this.slides = [...document.querySelectorAll(".slide")];
+    this.index = 0;
+    this.dots = document.querySelector(".nav-dots");
+    this.progress = document.querySelector(".progress");
+    this.slides.forEach((s, i) => {
+      const b = document.createElement("button");
+      b.setAttribute("aria-label", "Go to slide " + (i + 1));
+      b.addEventListener("click", () => this.go(i));
+      this.dots.appendChild(b);
+    });
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add("visible");
+          this.index = this.slides.indexOf(e.target);
+          this.update();
+        }
+      });
+    }, { threshold: 0.55 });
+    this.slides.forEach((s) => io.observe(s));
+    document.addEventListener("keydown", (e) => {
+      if (["ArrowDown", "ArrowRight", "PageDown", " "].includes(e.key)) { e.preventDefault(); this.go(this.index + 1); }
+      if (["ArrowUp", "ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); this.go(this.index - 1); }
+      if (e.key === "Home") this.go(0);
+      if (e.key === "End") this.go(this.slides.length - 1);
+    });
+    let lock = false;
+    window.addEventListener("wheel", (e) => {
+      if (lock || Math.abs(e.deltaY) < 20) return;
+      e.preventDefault();
+      lock = true;
+      this.go(this.index + (e.deltaY > 0 ? 1 : -1));
+      setTimeout(() => (lock = false), 700);
+    }, { passive: false });
+    let y0 = null;
+    window.addEventListener("touchstart", (e) => (y0 = e.touches[0].clientY), { passive: true });
+    window.addEventListener("touchend", (e) => {
+      if (y0 === null) return;
+      const dy = y0 - e.changedTouches[0].clientY;
+      if (Math.abs(dy) > 50) this.go(this.index + (dy > 0 ? 1 : -1));
+      y0 = null;
+    }, { passive: true });
+    this.update();
+  }
+  go(i) {
+    const n = Math.max(0, Math.min(this.slides.length - 1, i));
+    this.slides[n].scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }
+  update() {
+    [...this.dots.children].forEach((d, i) => d.setAttribute("aria-current", String(i === this.index)));
+    this.progress.style.width = ((this.index + 1) / this.slides.length) * 100 + "%";
+  }
+}
+new Deck();
+</script>
+</body>
+</html>

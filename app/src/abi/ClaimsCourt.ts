@@ -24,7 +24,22 @@ export const claimsCourtAbi = [
     "internalType": "uint256"
    },
    {
-    "name": "quorum_",
+    "name": "minQuorum_",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "quorumBps_",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "minVoters_",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "approvalBps_",
     "type": "uint256",
     "internalType": "uint256"
    },
@@ -39,19 +54,6 @@ export const claimsCourtAbi = [
  {
   "type": "function",
   "name": "BOND_BPS",
-  "inputs": [],
-  "outputs": [
-   {
-    "name": "",
-    "type": "uint256",
-    "internalType": "uint256"
-   }
-  ],
-  "stateMutability": "view"
- },
- {
-  "type": "function",
-  "name": "MAXTIME",
   "inputs": [],
   "outputs": [
    {
@@ -90,7 +92,33 @@ export const claimsCourtAbi = [
  },
  {
   "type": "function",
+  "name": "MIN_PAYOUT_GAS",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
   "name": "REWARD_SLICE_BPS",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "approvalBps",
   "inputs": [],
   "outputs": [
    {
@@ -119,6 +147,25 @@ export const claimsCourtAbi = [
    }
   ],
   "stateMutability": "pure"
+ },
+ {
+  "type": "function",
+  "name": "bondOwed",
+  "inputs": [
+   {
+    "name": "claimId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
  },
  {
   "type": "function",
@@ -214,6 +261,21 @@ export const claimsCourtAbi = [
       "internalType": "enum ClaimsCourt.Outcome"
      },
      {
+      "name": "payoutPending",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "voters",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "quorum",
+      "type": "uint128",
+      "internalType": "uint128"
+     },
+     {
       "name": "yesWeight",
       "type": "uint128",
       "internalType": "uint128"
@@ -234,6 +296,19 @@ export const claimsCourtAbi = [
       "internalType": "string"
      }
     ]
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "currentQuorum",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
    }
   ],
   "stateMutability": "view"
@@ -294,6 +369,32 @@ export const claimsCourtAbi = [
  {
   "type": "function",
   "name": "minLockTail",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "minQuorum",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "minVoters",
   "inputs": [],
   "outputs": [
    {
@@ -369,7 +470,7 @@ export const claimsCourtAbi = [
  },
  {
   "type": "function",
-  "name": "quorum",
+  "name": "quorumBps",
   "inputs": [],
   "outputs": [
    {
@@ -382,8 +483,40 @@ export const claimsCourtAbi = [
  },
  {
   "type": "function",
+  "name": "retryPayout",
+  "inputs": [
+   {
+    "name": "claimId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
   "name": "rewardPool",
   "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "rewardsDrawn",
+  "inputs": [
+   {
+    "name": "policyId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
   "outputs": [
    {
     "name": "",
@@ -434,12 +567,12 @@ export const claimsCourtAbi = [
   "name": "voteWeight",
   "inputs": [
    {
-    "name": "tokenId",
+    "name": "claimId",
     "type": "uint256",
     "internalType": "uint256"
    },
    {
-    "name": "votingEnds",
+    "name": "tokenId",
     "type": "uint256",
     "internalType": "uint256"
    }
@@ -506,6 +639,92 @@ export const claimsCourtAbi = [
   "stateMutability": "view"
  },
  {
+  "type": "function",
+  "name": "weightAt",
+  "inputs": [
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "filedAt",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "votingEnds",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "weight",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "withdrawBond",
+  "inputs": [
+   {
+    "name": "claimId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "event",
+  "name": "BondHeld",
+  "inputs": [
+   {
+    "name": "claimId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "amount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "BondWithdrawn",
+  "inputs": [
+   {
+    "name": "claimId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "claimant",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "amount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
   "type": "event",
   "name": "ClaimFiled",
   "inputs": [
@@ -541,6 +760,12 @@ export const claimsCourtAbi = [
    },
    {
     "name": "votingEnds",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "quorum",
     "type": "uint256",
     "indexed": false,
     "internalType": "uint256"
@@ -587,6 +812,44 @@ export const claimsCourtAbi = [
     "type": "uint256",
     "indexed": false,
     "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "PayoutCompleted",
+  "inputs": [
+   {
+    "name": "claimId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "amount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "PayoutDeferred",
+  "inputs": [
+   {
+    "name": "claimId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "reason",
+    "type": "bytes",
+    "indexed": false,
+    "internalType": "bytes"
    }
   ],
   "anonymous": false
@@ -715,6 +978,16 @@ export const claimsCourtAbi = [
  },
  {
   "type": "error",
+  "name": "InsufficientGas",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "NoPayoutPending",
+  "inputs": []
+ },
+ {
+  "type": "error",
   "name": "NoWeight",
   "inputs": []
  },
@@ -745,6 +1018,11 @@ export const claimsCourtAbi = [
  },
  {
   "type": "error",
+  "name": "QuorumUnavailable",
+  "inputs": []
+ },
+ {
+  "type": "error",
   "name": "ReentrancyGuardReentrantCall",
   "inputs": []
  },
@@ -757,6 +1035,17 @@ export const claimsCourtAbi = [
     "type": "uint8",
     "internalType": "uint8"
    },
+   {
+    "name": "value",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "SafeCastOverflowedUintToInt",
+  "inputs": [
    {
     "name": "value",
     "type": "uint256",

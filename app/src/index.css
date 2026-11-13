@@ -8,7 +8,8 @@
   --color-line: #2a2f2b;
   --color-paper: #ecebe4;
   --color-muted: #a3a197;
-  --color-dim: #74726a;
+  --color-dim: #8f8d84;
+  --color-edge: #6b6a62;
   --color-amber: #f5a524;
   --color-amber-ink: #1d1404;
   --color-red: #ff6b4a;
@@ -20,6 +21,10 @@
 
 :root {
   color-scheme: dark;
+}
+
+html {
+  scroll-padding-top: 6rem;
 }
 
 html,
@@ -43,7 +48,10 @@ a {
 :focus-visible {
   outline: 2px solid var(--color-amber);
   outline-offset: 3px;
-  border-radius: 4px;
+}
+
+main:focus {
+  outline: none;
 }
 
 .num {
@@ -75,6 +83,7 @@ a {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }

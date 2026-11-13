@@ -6,7 +6,7 @@ import { ADDR, DEPLOY_BLOCK, REPO, addrUrl } from "../config";
 import { AddressTag, Eyebrow, Panel, TxLink } from "../components/ui";
 import { teamLabel } from "../lib/format";
 import { useReveal } from "../lib/motion";
-import proofRaw from "../data/testnet.jsonl?raw";
+import proofRaw from "../data/testnet-v2.jsonl?raw";
 
 const PROOF = proofRaw
   .trim()
@@ -23,7 +23,7 @@ const CONTRACTS: { name: string; address: Address; role: string }[] = [
 const EVENTS = [
   { label: "bought cover", address: ADDR.policyManager, event: parseAbiItem("event PolicyBought(uint256 indexed policyId, address indexed holder, uint256 indexed productId, uint256 cover, uint256 premium, uint256 start, uint256 end, uint256 positionId)"), who: "holder" },
   { label: "underwrote", address: ADDR.pool, event: parseAbiItem("event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares)"), who: "owner" },
-  { label: "filed a claim", address: ADDR.court, event: parseAbiItem("event ClaimFiled(uint256 indexed claimId, uint256 indexed policyId, address indexed claimant, uint256 amount, uint256 incidentAt, uint256 votingEnds, string evidenceURI)"), who: "claimant" },
+  { label: "filed a claim", address: ADDR.court, event: parseAbiItem("event ClaimFiled(uint256 indexed claimId, uint256 indexed policyId, address indexed claimant, uint256 amount, uint256 incidentAt, uint256 votingEnds, uint256 quorum, string evidenceURI)"), who: "claimant" },
   { label: "voted as assessor", address: ADDR.court, event: parseAbiItem("event Voted(uint256 indexed claimId, uint256 indexed tokenId, address indexed voter, bool approve, uint256 weight)"), who: "voter" },
   { label: "got a starter kit", address: ADDR.starterKit, event: parseAbiItem("event KitSent(address indexed to, uint256 musd, uint256 gas)"), who: "to" },
 ] as const;
@@ -124,8 +124,9 @@ export default function Proof() {
       <section aria-labelledby="txs" className="mt-16">
         <h2 id="txs" className="font-display text-3xl">Lifecycle transactions</h2>
         <p className="mt-2 text-sm text-muted">
-          Underwriting, three policies, an approved claim (DRILL-001) and a rejected claim (DRILL-002), assessor votes and
-          rewards. Drills are labelled as drills in their evidence documents.
+          The run on the current contracts: underwriting, three policies, an approved claim (DRILL-001) and a rejected
+          claim (DRILL-002), assessor votes, rewards and the underwriter's exit. Drills are labelled as drills in their
+          evidence documents.
         </p>
         <ol className="mt-6 flex flex-col divide-y divide-line border-y border-line">
           {PROOF.map((p, i) => (
@@ -136,7 +137,15 @@ export default function Proof() {
           ))}
         </ol>
         <p className="mt-4 text-xs text-dim">
-          Machine-readable log: <a className="underline hover:text-amber" href={`${REPO}/blob/main/proof/testnet.jsonl`} target="_blank" rel="noopener noreferrer">proof/testnet.jsonl</a>
+          Machine-readable log:{" "}
+          <a className="underline hover:text-amber" href={`${REPO}/blob/main/proof/testnet-v2.jsonl`} target="_blank" rel="noopener noreferrer">
+            proof/testnet-v2.jsonl
+          </a>
+          . The same lifecycle also ran on the first deployment, before the security reviews:{" "}
+          <a className="underline hover:text-amber" href={`${REPO}/blob/main/proof/testnet.jsonl`} target="_blank" rel="noopener noreferrer">
+            proof/testnet.jsonl
+          </a>
+          .
         </p>
       </section>
     </div>

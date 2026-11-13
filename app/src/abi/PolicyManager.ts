@@ -95,6 +95,19 @@ export const policyManagerAbi = [
  },
  {
   "type": "function",
+  "name": "MAX_FREE_RETRIES",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint8",
+    "internalType": "uint8"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
   "name": "MAX_RATE_BPS",
   "inputs": [],
   "outputs": [
@@ -256,6 +269,11 @@ export const policyManagerAbi = [
     "name": "positionId",
     "type": "uint256",
     "internalType": "uint256"
+   },
+   {
+    "name": "maxPremium",
+    "type": "uint256",
+    "internalType": "uint256"
    }
   ],
   "outputs": [
@@ -275,6 +293,11 @@ export const policyManagerAbi = [
     "name": "policyId",
     "type": "uint256",
     "internalType": "uint256"
+   },
+   {
+    "name": "countAttempt",
+    "type": "bool",
+    "internalType": "bool"
    }
   ],
   "outputs": [],
@@ -358,11 +381,6 @@ export const policyManagerAbi = [
   "type": "function",
   "name": "insured",
   "inputs": [
-   {
-    "name": "productId",
-    "type": "uint256",
-    "internalType": "uint256"
-   },
    {
     "name": "positionKey",
     "type": "bytes32",
@@ -556,6 +574,11 @@ export const policyManagerAbi = [
       "internalType": "uint8"
      },
      {
+      "name": "freeRetries",
+      "type": "uint8",
+      "internalType": "uint8"
+     },
+     {
       "name": "start",
       "type": "uint64",
       "internalType": "uint64"
@@ -602,6 +625,35 @@ export const policyManagerAbi = [
    }
   ],
   "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "positionKey",
+  "inputs": [
+   {
+    "name": "kind",
+    "type": "uint8",
+    "internalType": "enum PolicyManager.PositionKind"
+   },
+   {
+    "name": "holder",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "positionId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   }
+  ],
+  "stateMutability": "pure"
  },
  {
   "type": "function",
@@ -724,7 +776,7 @@ export const policyManagerAbi = [
   "name": "renounceOwnership",
   "inputs": [],
   "outputs": [],
-  "stateMutability": "nonpayable"
+  "stateMutability": "view"
  },
  {
   "type": "function",
@@ -994,6 +1046,25 @@ export const policyManagerAbi = [
  },
  {
   "type": "function",
+  "name": "utilizationMultiplierBps",
+  "inputs": [
+   {
+    "name": "cover",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
   "name": "veBTC",
   "inputs": [],
   "outputs": [
@@ -1064,6 +1135,12 @@ export const policyManagerAbi = [
     "type": "uint256",
     "indexed": true,
     "internalType": "uint256"
+   },
+   {
+    "name": "counted",
+    "type": "bool",
+    "indexed": false,
+    "internalType": "bool"
    }
   ],
   "anonymous": false
@@ -1358,6 +1435,11 @@ export const policyManagerAbi = [
  },
  {
   "type": "error",
+  "name": "BadAmount",
+  "inputs": []
+ },
+ {
+  "type": "error",
   "name": "BadCover",
   "inputs": []
  },
@@ -1389,6 +1471,11 @@ export const policyManagerAbi = [
  {
   "type": "error",
   "name": "ClaimWindowOpen",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "CourtNotSet",
   "inputs": []
  },
  {
@@ -1527,6 +1614,11 @@ export const policyManagerAbi = [
  },
  {
   "type": "error",
+  "name": "LockEndsBeforePolicy",
+  "inputs": []
+ },
+ {
+  "type": "error",
   "name": "NotCourt",
   "inputs": []
  },
@@ -1564,12 +1656,38 @@ export const policyManagerAbi = [
  },
  {
   "type": "error",
+  "name": "PremiumTooHigh",
+  "inputs": [
+   {
+    "name": "premium",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "maxPremium",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "PriceUnavailable",
+  "inputs": []
+ },
+ {
+  "type": "error",
   "name": "ProductInactive",
   "inputs": []
  },
  {
   "type": "error",
   "name": "ReentrancyGuardReentrantCall",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "RenounceDisabled",
   "inputs": []
  },
  {
@@ -1617,6 +1735,11 @@ export const policyManagerAbi = [
  {
   "type": "error",
   "name": "ZeroAddress",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "ZeroPremium",
   "inputs": []
  }
 ] as const;

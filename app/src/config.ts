@@ -13,9 +13,9 @@ export const mezoTestnet = defineChain({
 
 /** BACKSTOP and the Mezo contracts it composes with. Every address verified on-chain. */
 export const ADDR = {
-  pool: "0xa7D94fF3FDAF16ab8dAccB3706924a9B47e84C3C",
-  policyManager: "0x84EbA4A8067b3D6229aFA063508d465748Be1C6C",
-  court: "0x5C44309532184921421Bd7f9b1bCbE782F074C5b",
+  pool: "0xf8F5D150FE8A66C10eC786F37904a9FB82638B4C",
+  policyManager: "0xB9DB90dE921118f1793D81242F571afd722DF05F",
+  court: "0xD50CF771E2d0F192CF2100F5Dab9bE0646904a50",
   starterKit: "0xDE8515faffD1e41b74F0e9DDa7EF116b8219E7D6",
   musd: "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
   smusd: "0x6f461c68B2c5492C0F5CCEc5a264d692aA7A8e16",

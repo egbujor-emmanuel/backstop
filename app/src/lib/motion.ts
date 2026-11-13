@@ -33,6 +33,7 @@ export function useSmoothScroll(): void {
     gsap.ticker.lagSmoothing(0);
     return () => {
       gsap.ticker.remove(tick);
+      gsap.ticker.lagSmoothing(500, 33);
       lenis.destroy();
     };
   }, [reduced]);

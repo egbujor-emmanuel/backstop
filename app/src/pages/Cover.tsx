@@ -1,25 +1,23 @@
 import { useMemo, useRef, useState } from "react";
 import { useAccount, useReadContract } from "wagmi";
-import { parseUnits } from "viem";
 import { ADDR } from "../config";
 import { policyManagerAbi } from "../abi/PolicyManager";
 import { erc20Abi } from "viem";
 import { Eyebrow, Field, Panel, TxButton, inputClass, AddressTag, type TxStep } from "../components/ui";
 import { KIND, STATUS, useMusd, usePolicies, useProducts, usePoolStats } from "../hooks/useProtocol";
-import { dateTime, musd, bps, compact } from "../lib/format";
+import { dateTime, musd, bps, compact, parseAmount, sanitizeAmount } from "../lib/format";
 import { useReveal } from "../lib/motion";
 import { StarterKitCard } from "../components/StarterKitCard";
 
 const DAY = 86_400n;
-const MAX_UINT = 2n ** 256n - 1n;
 
 export default function Cover() {
   const root = useRef<HTMLDivElement>(null);
-  useReveal(root);
   const { address } = useAccount();
   const { products, refetch: refetchProducts } = useProducts();
   const { policies, refetch: refetchPolicies } = usePolicies();
-  const { stats } = usePoolStats();
+  const { stats, refetch: refetchStats } = usePoolStats();
+  useReveal(root, [products.length]);
   const { balance, allowance, refetch: refetchMusd } = useMusd(address, ADDR.policyManager);
 
   const [productId, setProductId] = useState(2);
@@ -29,13 +27,7 @@ export default function Cover() {
 
   const product = products[productId];
   const kind = product ? Number(product.kind) : 0;
-  const cover = useMemo(() => {
-    try {
-      return parseUnits(amount || "0", 18);
-    } catch {
-      return 0n;
-    }
-  }, [amount]);
+  const cover = useMemo(() => parseAmount(amount), [amount]);
   const durationSec = BigInt(Math.max(0, Math.floor(Number(days) || 0))) * DAY;
   const posId = kind === 1 ? BigInt(positionId || "0") : 0n;
 
@@ -55,6 +47,8 @@ export default function Cover() {
   });
 
   const premium = quote.data;
+  // Approve the premium plus 1%: the utilization multiplier can rise if someone buys first.
+  const approval = premium !== undefined ? premium + premium / 100n + 1n : undefined;
   const needsApproval = premium !== undefined && (allowance ?? 0n) < premium;
   const problems: string[] = [];
   if (product && !product.active) problems.push("This product is paused for new policies.");
@@ -69,9 +63,9 @@ export default function Cover() {
 
   const steps: TxStep[] = [
     ...(needsApproval
-      ? [{ label: "Approve MUSD", address: ADDR.musd, abi: erc20Abi, functionName: "approve", args: [ADDR.policyManager, MAX_UINT] } as TxStep]
+      ? [{ label: "Approve MUSD", address: ADDR.musd, abi: erc20Abi, functionName: "approve", args: [ADDR.policyManager, approval ?? 0n] } as TxStep]
       : []),
-    { label: "Buy policy", address: ADDR.policyManager, abi: policyManagerAbi, functionName: "buy", args: [BigInt(productId), cover, durationSec, posId] },
+    { label: "Buy policy", address: ADDR.policyManager, abi: policyManagerAbi, functionName: "buy", args: [BigInt(productId), cover, durationSec, posId, approval ?? 0n] },
   ];
 
   const mine = policies.filter((p) => address && p.holder.toLowerCase() === address.toLowerCase());
@@ -98,23 +92,31 @@ export default function Cover() {
                 data-reveal
                 onClick={() => setProductId(i)}
                 aria-pressed={selected}
+                aria-label={`${p.name}, ${bps(p.annualRateBps)} a year${p.active ? "" : ", paused"}`}
+                aria-describedby={`product-${i}-details`}
                 className={`group rounded-2xl border p-5 text-left transition-colors ${selected ? "border-amber bg-panel-2" : "border-line bg-panel hover:border-muted"}`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="font-medium text-paper">{p.name}</h2>
-                    <p className="mt-1 text-xs text-dim">{p.coveredUri}</p>
-                  </div>
+                <span className="flex items-start justify-between gap-4">
+                  <span className="block min-w-0">
+                    <span className="block font-medium text-paper">{p.name}</span>
+                    <span id={`product-${i}-details`} className="mt-1 block text-xs text-dim [overflow-wrap:anywhere]">
+                      {p.coveredUri}
+                      <span className="sr-only">
+                        {" "}
+                        {KIND[Number(p.kind)]}. {compact(p.activeCover)} of {compact(p.capacity)} MUSD capacity used.
+                      </span>
+                    </span>
+                  </span>
                   <span className="num shrink-0 text-lg text-amber">{bps(p.annualRateBps)}<span className="text-xs text-dim">/yr</span></span>
-                </div>
-                <div className="mt-4 flex items-center gap-3 text-xs text-muted">
+                </span>
+                <span className="mt-4 flex items-center gap-3 text-xs text-muted" aria-hidden>
                   <span className="rounded-full border border-line px-2 py-0.5">{KIND[Number(p.kind)]}</span>
                   <span className="num">{compact(p.activeCover)} / {compact(p.capacity)} MUSD used</span>
                   {!p.active && <span className="text-red">paused</span>}
-                </div>
-                <div className="mt-2 h-1 overflow-hidden rounded-full bg-line" aria-hidden>
-                  <div className="h-full origin-left bg-amber transition-transform duration-700" style={{ transform: `scaleX(${used / 10_000})` }} />
-                </div>
+                </span>
+                <span className="mt-2 block h-1 overflow-hidden rounded-full bg-line" aria-hidden>
+                  <span className="block h-full origin-left bg-amber transition-transform duration-700" style={{ transform: `scaleX(${used / 10_000})` }} />
+                </span>
               </button>
             );
           })}
@@ -127,7 +129,7 @@ export default function Cover() {
             <h2 className="font-display text-3xl">{product?.name ?? "…"}</h2>
             <div className="mt-6 flex flex-col gap-4">
               <Field label="Cover (MUSD)">
-                <input className={inputClass} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} />
+                <input className={inputClass} inputMode="decimal" value={amount} onChange={(e) => setAmount(sanitizeAmount(e.target.value))} />
               </Field>
               <Field label="Duration (days)" hint="7 to 365 days">
                 <input className={inputClass} inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value.replace(/[^0-9]/g, ""))} />
@@ -150,11 +152,13 @@ export default function Cover() {
                 </div>
                 <p className="mt-2 text-xs text-dim">85% to underwriters, 5% to veMEZO assessors, 10% protocol fee. Your balance: {musd(balance)} MUSD.</p>
               </div>
-              {problems.length > 0 && (
-                <ul className="flex flex-col gap-1 text-sm text-red" role="alert">
-                  {problems.map((p) => <li key={p}>{p}</li>)}
-                </ul>
-              )}
+              <div id="cover-problems" role="status" aria-live="polite">
+                {problems.length > 0 && (
+                  <ul className="flex flex-col gap-1 text-sm text-red">
+                    {problems.map((p) => <li key={p}>{p}</li>)}
+                  </ul>
+                )}
+              </div>
               <TxButton
                 steps={steps}
                 disabled={!product || premium === undefined || problems.length > 0}
@@ -162,6 +166,7 @@ export default function Cover() {
                   refetchPolicies();
                   refetchProducts();
                   refetchMusd();
+                  refetchStats();
                 }}
               >
                 {needsApproval ? "Approve and buy cover" : "Buy cover"}
@@ -180,10 +185,11 @@ export default function Cover() {
         {!address && <p className="mt-3 text-muted">Connect a wallet to see your policies.</p>}
         {address && mine.length === 0 && <p className="mt-3 text-muted">No policies on this wallet yet.</p>}
         {mine.length > 0 && (
-          <div className="mt-6 overflow-x-auto">
+          <div className="mt-6 overflow-x-auto" tabIndex={0} role="region" aria-labelledby="mine">
             <table className="w-full min-w-[640px] text-left text-sm">
+              <caption className="sr-only">Policies held by the connected wallet</caption>
               <thead className="text-xs uppercase tracking-wider text-dim">
-                <tr><th className="py-2">#</th><th>Product</th><th>Cover</th><th>Ends</th><th>Status</th></tr>
+                <tr><th scope="col" className="py-2">#</th><th scope="col">Product</th><th scope="col">Cover</th><th scope="col">Ends</th><th scope="col">Status</th></tr>
               </thead>
               <tbody>
                 {mine.map((p) => (
@@ -204,10 +210,11 @@ export default function Cover() {
       {/* All policies */}
       <section aria-labelledby="all" className="mt-16">
         <h2 id="all" className="font-display text-3xl">Every policy sold</h2>
-        <div className="mt-6 overflow-x-auto">
+        <div className="mt-6 overflow-x-auto" tabIndex={0} role="region" aria-labelledby="all">
           <table className="w-full min-w-[720px] text-left text-sm">
+            <caption className="sr-only">Every BACKSTOP policy sold, newest first</caption>
             <thead className="text-xs uppercase tracking-wider text-dim">
-              <tr><th className="py-2">#</th><th>Holder</th><th>Product</th><th>Cover</th><th>Premium</th><th>Status</th></tr>
+              <tr><th scope="col" className="py-2">#</th><th scope="col">Holder</th><th scope="col">Product</th><th scope="col">Cover</th><th scope="col">Premium</th><th scope="col">Status</th></tr>
             </thead>
             <tbody>
               {policies.map((p) => (

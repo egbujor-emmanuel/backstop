@@ -1,4 +1,4 @@
-import { formatUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 import { TEAM_WALLETS } from "../config";
 
 export function musd(value: bigint | undefined, digits = 2): string {
@@ -60,4 +60,22 @@ export function errorMessage(error: unknown): string {
   const name = e.cause?.data?.errorName;
   if (name) return `Reverted: ${name}`;
   return e.shortMessage ?? e.message ?? "Unexpected error";
+}
+
+/** Keeps digits and at most one decimal point, with at most 18 decimals. */
+export function sanitizeAmount(raw: string): string {
+  const cleaned = raw.replace(/[^0-9.]/g, "");
+  const [whole, ...rest] = cleaned.split(".");
+  if (rest.length === 0) return whole;
+  return `${whole}.${rest.join("").slice(0, 18)}`;
+}
+
+/** MUSD amount in wei, or 0n if the input is empty or not a number. */
+export function parseAmount(value: string): bigint {
+  if (!/^\d*\.?\d*$/.test(value) || value === "" || value === ".") return 0n;
+  try {
+    return parseUnits(value, 18);
+  } catch {
+    return 0n;
+  }
 }

@@ -6,7 +6,7 @@ import { usePoolStats, usePolicies, useClaims } from "../hooks/useProtocol";
 import { bps, compact, usd } from "../lib/format";
 import { gsap, prefersReducedMotion, useGSAP, useReveal } from "../lib/motion";
 import exploit from "../data/oct5_exploit_positions.json";
-import proofRaw from "../data/testnet.jsonl?raw";
+import proofRaw from "../data/testnet-v2.jsonl?raw";
 
 const PROOF = proofRaw
   .trim()
@@ -72,9 +72,9 @@ export default function Home() {
       <section aria-labelledby="hero" className="relative grain">
         <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-16 sm:px-6 sm:pt-24">
           <Eyebrow>Live on Mezo testnet · MUSD cover</Eyebrow>
-          <h1 id="hero" className="mt-6 max-w-4xl font-display text-[clamp(2.8rem,1.2rem+6vw,6.5rem)] leading-[0.95] tracking-tight">
+          <h1 id="hero" aria-label={headline.join(" ")} className="mt-6 max-w-4xl font-display text-[clamp(2.8rem,1.2rem+6vw,6.5rem)] leading-[0.95] tracking-tight">
             {headline.map((w, i) => (
-              <span key={i} className="inline-block overflow-hidden pb-2 align-bottom">
+              <span key={i} aria-hidden className="inline-block overflow-hidden pb-2 align-bottom">
                 <span data-hero-word className={`inline-block pr-[0.25em] ${w === "covered." ? "italic text-amber" : ""}`}>
                   {w}
                 </span>
@@ -197,7 +197,7 @@ export default function Home() {
             <Link to="/proof" className="text-sm text-amber hover:underline">All contracts and transactions →</Link>
           </div>
           <ol className="mt-6 grid gap-x-8 gap-y-2 sm:grid-cols-2">
-            {PROOF.slice(0, 12).map((p) => (
+            {PROOF.filter((p) => !p.label.includes(" approves ")).slice(0, 12).map((p) => (
               <li key={p.tx} className="flex items-baseline justify-between gap-3 border-b border-line/60 py-2 text-sm">
                 <span className="text-muted">{p.label}</span>
                 <TxLink hash={p.tx} />

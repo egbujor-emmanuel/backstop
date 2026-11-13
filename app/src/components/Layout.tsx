@@ -1,10 +1,20 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
+import { useAccount, useDisconnect, useSwitchChain } from "wagmi";
 import { short, teamLabel } from "../lib/format";
 import { mezoTestnet } from "../lib/wagmi";
 import { REPO } from "../config";
 import { useSmoothScroll } from "../lib/motion";
+import { WalletMenu } from "./WalletMenu";
+
+const TITLES: Record<string, string> = {
+  "/": "BACKSTOP · cover for Mezo",
+  "/cover": "Get cover · BACKSTOP",
+  "/underwrite": "Underwrite · BACKSTOP",
+  "/claims": "Claims court · BACKSTOP",
+  "/replay": "Oct 5 replay · BACKSTOP",
+  "/proof": "Proof · BACKSTOP",
+};
 
 const NAV = [
   { to: "/cover", label: "Get cover" },
@@ -16,38 +26,10 @@ const NAV = [
 
 function ConnectButton() {
   const { address, isConnected, chainId } = useAccount();
-  const { connect, connectors, isPending, error } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain } = useSwitchChain();
 
-  if (!isConnected) {
-    const hasWallet = typeof window !== "undefined" && "ethereum" in window && !!(window as { ethereum?: unknown }).ethereum;
-    if (!hasWallet) {
-      return (
-        <a
-          href="https://metamask.io/download/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-full border border-amber px-4 py-2 text-sm text-amber transition-colors hover:bg-amber hover:text-amber-ink"
-        >
-          Install a wallet
-        </a>
-      );
-    }
-    const injected = connectors[0];
-    return (
-      <div className="flex flex-col items-end">
-        <button
-          type="button"
-          onClick={() => injected && connect({ connector: injected, chainId: mezoTestnet.id })}
-          className="rounded-full bg-amber px-4 py-2 text-sm font-medium text-amber-ink transition hover:bg-[#ffb83f] active:scale-[0.98]"
-        >
-          {isPending ? "Connecting…" : "Connect wallet"}
-        </button>
-        {error && <span className="mt-1 text-[11px] text-red">{error.message.split("\n")[0]}</span>}
-      </div>
-    );
-  }
+  if (!isConnected) return <WalletMenu />;
   if (chainId !== mezoTestnet.id) {
     return (
       <button
@@ -65,6 +47,7 @@ function ConnectButton() {
       type="button"
       onClick={() => disconnect()}
       title="Disconnect"
+      aria-label={`${short(address)}${label ? " · team" : ""}: disconnect wallet`}
       className="num rounded-full border border-line px-4 py-2 text-sm text-paper transition hover:border-amber"
     >
       {short(address)}
@@ -76,21 +59,42 @@ function ConnectButton() {
 export function Layout({ children }: { children: ReactNode }) {
   useSmoothScroll();
   const { pathname } = useLocation();
+  const [announcement, setAnnouncement] = useState("");
+  const firstRender = useRef(true);
   useEffect(() => {
     window.scrollTo(0, 0);
+    const title = TITLES[pathname] ?? "BACKSTOP";
+    document.title = title;
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    // Tell screen-reader users the page changed and start them at the new page's content.
+    setAnnouncement(title);
+    document.getElementById("main")?.focus({ preventScroll: true });
   }, [pathname]);
 
   return (
     <div className="relative min-h-screen overflow-x-clip">
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-amber focus:px-3 focus:py-2 focus:text-amber-ink">
+      <a
+        href="#main"
+        onClick={(e) => {
+          // HashRouter treats the hash as the route, so move focus instead of navigating.
+          e.preventDefault();
+          document.getElementById("main")?.focus();
+        }}
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-amber focus:px-3 focus:py-2 focus:text-amber-ink">
         Skip to content
       </a>
       <div className="stripe h-1.5 w-full opacity-90" aria-hidden />
-      <header className="sticky top-0 z-40 border-b border-line/70 bg-ink/85 backdrop-blur">
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
+      <header className="z-40 lg:sticky lg:top-0 border-b border-line/70 bg-ink/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <NavLink to="/" className="flex items-baseline gap-2" aria-label="BACKSTOP home">
             <span className="font-display text-2xl leading-none tracking-tight text-paper">BACKSTOP</span>
-            <span className="hidden text-[10px] uppercase tracking-[0.2em] text-dim sm:inline">cover for Mezo</span>
+            <span className="hidden text-xs uppercase tracking-[0.2em] text-dim sm:inline">cover for Mezo</span>
           </NavLink>
           <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
             {NAV.map((n) => (
@@ -98,7 +102,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 key={n.to}
                 to={n.to}
                 className={({ isActive }) =>
-                  `rounded-full px-3 py-1.5 text-sm transition ${isActive ? "bg-panel-2 text-paper" : "text-muted hover:text-paper"}`
+                  `rounded-full px-3 py-1.5 text-sm transition ${isActive ? "bg-panel-2 text-paper underline decoration-amber decoration-2 underline-offset-[6px]" : "text-muted hover:text-paper"}`
                 }
               >
                 {n.label}
@@ -113,7 +117,7 @@ export function Layout({ children }: { children: ReactNode }) {
               key={n.to}
               to={n.to}
               className={({ isActive }) =>
-                `whitespace-nowrap rounded-full px-3 py-1 text-xs ${isActive ? "bg-panel-2 text-paper" : "text-muted"}`
+                `whitespace-nowrap rounded-full px-3 py-2 text-xs ${isActive ? "bg-panel-2 text-paper underline decoration-amber decoration-2 underline-offset-4" : "text-muted"}`
               }
             >
               {n.label}
@@ -121,7 +125,9 @@ export function Layout({ children }: { children: ReactNode }) {
           ))}
         </nav>
       </header>
-      <main id="main">{children}</main>
+      <main id="main" tabIndex={-1} className="outline-none">
+        {children}
+      </main>
       <footer className="mt-24 border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-10 text-sm text-dim sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>

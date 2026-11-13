@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAccount, useReadContracts } from "wagmi";
-import { erc20Abi, parseUnits } from "viem";
+import { erc20Abi } from "viem";
 import { ADDR } from "../config";
 import { backstopPoolAbi } from "../abi/BackstopPool";
 import { Eyebrow, Field, Panel, Stat, TxButton, inputClass, type TxStep } from "../components/ui";
 import { StarterKitCard } from "../components/StarterKitCard";
 import { useMusd, usePoolStats } from "../hooks/useProtocol";
-import { bps, duration, musd } from "../lib/format";
+import { bps, duration, musd, parseAmount, sanitizeAmount } from "../lib/format";
 import { useReveal } from "../lib/motion";
 
-const MAX_UINT = 2n ** 256n - 1n;
 const pool = { address: ADDR.pool, abi: backstopPoolAbi } as const;
 const ZERO = "0x0000000000000000000000000000000000000000" as const;
 
@@ -46,22 +45,16 @@ export default function Underwrite() {
   const maxWithdraw = me.data?.[2];
   const maxRedeem = me.data?.[3];
   const cooldown = me.data?.[4];
-  const window = me.data?.[5];
+  const withdrawWindow = me.data?.[5];
   const position = useReadContracts({
     contracts: [{ ...pool, functionName: "convertToAssets", args: [shares ?? 0n] }],
     allowFailure: false,
-    query: { enabled: shares !== undefined },
+    query: { enabled: shares !== undefined, refetchInterval: 12_000 },
   });
   const value = position.data?.[0];
 
   const [amount, setAmount] = useState("10");
-  const deposit = useMemo(() => {
-    try {
-      return parseUnits(amount || "0", 18);
-    } catch {
-      return 0n;
-    }
-  }, [amount]);
+  const deposit = useMemo(() => parseAmount(amount), [amount]);
 
   const refresh = () => {
     me.refetch();
@@ -72,14 +65,14 @@ export default function Underwrite() {
 
   const depositSteps: TxStep[] = [
     ...((allowance ?? 0n) < deposit
-      ? [{ label: "Approve MUSD", address: ADDR.musd, abi: erc20Abi, functionName: "approve", args: [ADDR.pool, MAX_UINT] } as TxStep]
+      ? [{ label: "Approve MUSD", address: ADDR.musd, abi: erc20Abi, functionName: "approve", args: [ADDR.pool, deposit] } as TxStep]
       : []),
     { label: "Deposit", address: ADDR.pool, abi: backstopPoolAbi, functionName: "deposit", args: [deposit, address ?? ZERO] },
   ];
 
   const requestShares = request?.[0] ?? 0n;
   const unlockAt = Number(request?.[1] ?? 0n);
-  const windowEnd = unlockAt + Number(window ?? 0n);
+  const windowEnd = unlockAt + Number(withdrawWindow ?? 0n);
   let requestState = "No withdrawal requested.";
   if (requestShares > 0n) {
     if (now < unlockAt) requestState = `Cooldown: unlocks in ${duration(unlockAt - now)}.`;
@@ -109,7 +102,7 @@ export default function Underwrite() {
           <h2 className="font-display text-3xl">Deposit</h2>
           <div className="mt-6 flex flex-col gap-4">
             <Field label="Amount (MUSD)" hint={`Wallet balance: ${musd(balance)} MUSD`}>
-              <input className={inputClass} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} />
+              <input className={inputClass} inputMode="decimal" value={amount} onChange={(e) => setAmount(sanitizeAmount(e.target.value))} />
             </Field>
             <TxButton steps={depositSteps} disabled={deposit === 0n || (balance !== undefined && deposit > balance)} onDone={refresh}>
               Deposit {amount || "0"} MUSD
@@ -135,7 +128,7 @@ export default function Underwrite() {
             <TxButton
               variant="ghost"
               steps={[{ label: "Request withdrawal", address: ADDR.pool, abi: backstopPoolAbi, functionName: "requestWithdraw", args: [shares ?? 0n] }]}
-              disabled={!shares}
+              disabled={!shares || (requestShares > 0n && now <= windowEnd)}
               onDone={refresh}
             >
               Request withdrawal
