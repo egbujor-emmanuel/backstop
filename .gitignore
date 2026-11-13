@@ -14,3 +14,6 @@ video/capture/*.png
 video/contact*.png
 video/grid*.png
 .playwright-mcp/
+video/assets/clips/
+video/.hyperframes/artifacts/
+video/renders/
