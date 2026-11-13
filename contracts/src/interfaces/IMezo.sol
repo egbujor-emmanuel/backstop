@@ -45,7 +45,25 @@ interface IVotingEscrow {
         bool isPermanent;
     }
 
+    /// @dev Field order from tigris IVotingEscrow.UserPoint; verified against veMEZO testnet.
+    struct UserPoint {
+        int128 bias;
+        int128 slope;
+        uint256 ts;
+        uint256 blk;
+        uint256 permanent;
+    }
+
     function ownerOf(uint256 tokenId) external view returns (address);
     function locked(uint256 tokenId) external view returns (LockedBalance memory);
     function token() external view returns (address);
+    /// @notice Latest checkpoint index of a lock. Every create, merge, split, deposit, unlock-time
+    /// change or permanent-lock toggle writes a new checkpoint.
+    function userPointEpoch(uint256 tokenId) external view returns (uint256);
+    function userPointHistory(uint256 tokenId, uint256 loc) external view returns (UserPoint memory);
+}
+
+/// @dev Mezo's veMEZO exposes total voting power (verified on testnet: totalVotingPower()).
+interface IVotingPower {
+    function totalVotingPower() external view returns (uint256);
 }

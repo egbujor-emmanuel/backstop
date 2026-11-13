@@ -3,6 +3,7 @@ pragma solidity 0.8.28;
 
 import {Fixture} from "./utils/Fixture.sol";
 import {BackstopPool} from "../src/BackstopPool.sol";
+import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IMUSDSavingsRate} from "../src/interfaces/IMezo.sol";
 
@@ -105,7 +106,9 @@ contract BackstopPoolTest is Fixture {
         assertGt(maxAssets, 3_999e18);
 
         vm.prank(underwriter);
-        vm.expectRevert();
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxWithdraw.selector, underwriter, maxAssets + 2e18, maxAssets)
+        );
         pool.withdraw(maxAssets + 2e18, underwriter, underwriter);
 
         vm.prank(underwriter);
@@ -187,6 +190,74 @@ contract BackstopPoolTest is Fixture {
         uint256 victimShares = _underwrite(10_000e18);
         assertGt(victimShares, 0, "victim minted shares");
         assertApproxEqRel(pool.convertToAssets(victimShares), 10_000e18, 0.001e18);
+    }
+
+    function test_parkedPrincipalIsTrackedInternally() public {
+        _underwrite(10_000e18);
+        assertEq(pool.parked(), 9_000e18);
+        assertEq(pool.parked(), savings.balanceOf(address(pool)));
+        vm.startPrank(address(pm));
+        pool.lockCover(5_000e18);
+        pool.payClaim(buyer, 5_000e18, 5_000e18);
+        vm.stopPrank();
+        assertEq(pool.parked(), savings.balanceOf(address(pool)), "unparking keeps the books in sync");
+    }
+
+    function test_failingYieldReadDoesNotBrickThePool() public {
+        _underwrite(10_000e18);
+        savings.accrue(address(pool), 100e18);
+        savings.setYieldReverts(true);
+        assertFalse(pool.yieldReadOk());
+        assertEq(pool.totalAssets(), 10_000e18, "unreadable yield counts as zero");
+        _buy(assessedProduct, 1_000e18, 30 days, 0); // sales still work
+
+        // Deposits pause, so nobody mints shares at a price that ignores the hidden yield.
+        assertEq(pool.maxDeposit(underwriter), 0);
+        vm.startPrank(underwriter);
+        musd.approve(address(pool), 1_000e18);
+        vm.expectRevert(abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxDeposit.selector, underwriter, 1_000e18, 0));
+        pool.deposit(1_000e18, underwriter);
+        vm.stopPrank();
+
+        savings.setYieldReverts(false);
+        assertTrue(pool.yieldReadOk());
+        _underwrite(1_000e18); // deposits reopen
+    }
+
+    function test_depositsStopWhenSharePriceCollapses() public {
+        _underwrite(1_000e18);
+        vm.startPrank(address(pm));
+        pool.lockCover(999.999e18);
+        pool.payClaim(buyer, 999.999e18, 999.999e18);
+        vm.stopPrank();
+        musd.mint(stranger, 1e18);
+        vm.prank(stranger);
+        musd.transfer(address(pool), 1); // a 1 wei donation does not reopen deposits
+        assertGt(pool.totalAssets(), 0);
+        assertEq(pool.maxDeposit(underwriter), 0, "price below 1% of par");
+    }
+
+    function test_constructorRejectsBadConfig() public {
+        vm.expectRevert(BackstopPool.BadConfig.selector);
+        new BackstopPool(IERC20(address(musd)), IMUSDSavingsRate(address(0xBEEF)), 1, 1); // no code
+        vm.expectRevert(BackstopPool.BadConfig.selector);
+        new BackstopPool(IERC20(address(musd)), IMUSDSavingsRate(address(savings)), 1, 0); // zero window
+    }
+
+    function test_depositsStopWhenAssetsAreWipedOut() public {
+        _underwrite(1_000e18);
+        vm.startPrank(address(pm));
+        pool.lockCover(1_000e18);
+        pool.payClaim(buyer, 1_000e18, 1_000e18);
+        vm.stopPrank();
+        assertEq(pool.totalAssets(), 0);
+        assertGt(pool.totalSupply(), 0);
+        assertEq(pool.maxDeposit(underwriter), 0);
+        vm.startPrank(underwriter);
+        musd.approve(address(pool), 1_000e18);
+        vm.expectRevert(abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxDeposit.selector, underwriter, 1_000e18, 0));
+        pool.deposit(1_000e18, underwriter);
+        vm.stopPrank();
     }
 
     function test_utilization() public {

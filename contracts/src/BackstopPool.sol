@@ -37,6 +37,8 @@ contract BackstopPool is ERC4626, ReentrancyGuard {
 
     /// @notice Total cover currently backed by this pool.
     uint256 public activeCover;
+    /// @notice MUSD principal currently deposited in sMUSD by this pool.
+    uint256 public parked;
     /// @notice Unvested premium as of lastPremiumUpdate.
     uint256 public lockedPremium;
     uint256 public lastPremiumUpdate;
@@ -67,6 +69,7 @@ contract BackstopPool is ERC4626, ReentrancyGuard {
     error InsufficientLiquidity(uint256 requested, uint256 available);
     error WithdrawNotRequested();
     error ExceedsBalance();
+    error BadConfig();
 
     modifier onlyPolicyManager() {
         if (msg.sender != policyManager) revert NotPolicyManager();
@@ -80,6 +83,7 @@ contract BackstopPool is ERC4626, ReentrancyGuard {
         uint256 withdrawWindow_
     ) ERC20("BACKSTOP Underwriter MUSD", "bsMUSD") ERC4626(musd_) {
         if (address(musd_) == address(0) || address(savings_) == address(0)) revert ZeroAddress();
+        if (address(savings_).code.length == 0 || withdrawWindow_ == 0) revert BadConfig();
         savings = savings_;
         withdrawCooldown = withdrawCooldown_;
         withdrawWindow = withdrawWindow_;
@@ -100,11 +104,45 @@ contract BackstopPool is ERC4626, ReentrancyGuard {
     // Accounting
     // ---------------------------------------------------------------------
 
-    /// @notice MUSD held directly, plus sMUSD principal (1:1), plus claimable sMUSD yield.
+    /// @notice MUSD held directly, plus sMUSD principal this pool parked (sMUSD mints 1:1), plus
+    /// claimable sMUSD yield. Principal is tracked internally; if the yield read fails or returns
+    /// malformed data it counts as zero, so a paused or upgraded sMUSD cannot block sales,
+    /// withdrawals or payouts. Deposits pause while it fails (see maxDeposit).
     function grossAssets() public view returns (uint256) {
-        IERC20 musd = IERC20(asset());
-        return musd.balanceOf(address(this)) + savings.balanceOf(address(this))
-            + savings.claimableYield(address(this));
+        (, uint256 y) = _claimableYield();
+        return IERC20(asset()).balanceOf(address(this)) + parked + y;
+    }
+
+    /// @notice Whether sMUSD's yield can currently be read.
+    function yieldReadOk() public view returns (bool ok) {
+        (ok,) = _claimableYield();
+    }
+
+    /// @dev Low-level read: a revert and malformed return data both report (false, 0).
+    function _claimableYield() internal view returns (bool, uint256) {
+        (bool ok, bytes memory ret) =
+            address(savings).staticcall(abi.encodeCall(IMUSDSavingsRate.claimableYield, (address(this))));
+        if (!ok || ret.length < 32) return (false, 0);
+        return (true, abi.decode(ret, (uint256)));
+    }
+
+    /// @notice Deposits pause while sMUSD yield cannot be read (shares would be mispriced), and if
+    /// the share price ever falls below 1% of par while shares exist (minting into a wiped-out
+    /// pool would hand a new depositor most of the remaining assets and future premiums).
+    function maxDeposit(address) public view override returns (uint256) {
+        return _depositsOpen() ? type(uint256).max : 0;
+    }
+
+    function maxMint(address) public view override returns (uint256) {
+        return _depositsOpen() ? type(uint256).max : 0;
+    }
+
+    function _depositsOpen() internal view returns (bool) {
+        if (!yieldReadOk()) return false;
+        uint256 supply = totalSupply();
+        if (supply == 0) return true;
+        // At par one MUSD wei backs 10**_decimalsOffset() shares.
+        return totalAssets() * (10 ** _decimalsOffset()) * 100 >= supply;
     }
 
     /// @notice Premium that has not vested yet.
@@ -233,9 +271,17 @@ contract BackstopPool is ERC4626, ReentrancyGuard {
 
     /// @notice Pull accrued sMUSD yield into the pool as liquid MUSD. Permissionless.
     function harvest() external nonReentrant returns (uint256 amount) {
-        amount = savings.claimYield();
-        emit YieldHarvested(amount);
+        amount = _claimYieldMeasured();
         _park();
+    }
+
+    /// @dev Claims sMUSD yield and records the MUSD that actually arrived.
+    function _claimYieldMeasured() internal returns (uint256 received) {
+        IERC20 musd = IERC20(asset());
+        uint256 before = musd.balanceOf(address(this));
+        savings.claimYield();
+        received = musd.balanceOf(address(this)) - before;
+        emit YieldHarvested(received);
     }
 
     /// @notice Re-park liquid MUSD above the buffer. Permissionless.
@@ -251,7 +297,11 @@ contract BackstopPool is ERC4626, ReentrancyGuard {
         uint256 amount = liquid - target;
         musd.forceApprove(address(savings), amount);
         try savings.deposit(amount) {
-            emit Parked(amount);
+            // Credit only the MUSD that actually left, and never leave a standing approval.
+            uint256 spent = liquid - musd.balanceOf(address(this));
+            parked += spent;
+            musd.forceApprove(address(savings), 0);
+            emit Parked(spent);
         } catch {
             // If sMUSD is paused or reverts, keep the MUSD liquid; the pool keeps working.
             musd.forceApprove(address(savings), 0);
@@ -263,17 +313,20 @@ contract BackstopPool is ERC4626, ReentrancyGuard {
         IERC20 musd = IERC20(asset());
         uint256 liquid = musd.balanceOf(address(this));
         if (liquid >= amount) return;
-        uint256 parked = savings.balanceOf(address(this));
         uint256 need = amount - liquid;
         uint256 pull = Math.min(need, parked);
         if (pull > 0) {
+            parked -= pull;
             savings.withdraw(pull);
-            emit Unparked(pull);
+            emit Unparked(musd.balanceOf(address(this)) - liquid);
         }
         liquid = musd.balanceOf(address(this));
-        if (liquid < amount && savings.claimableYield(address(this)) > 0) {
-            savings.claimYield();
-            liquid = musd.balanceOf(address(this));
+        if (liquid < amount) {
+            (bool ok, uint256 y) = _claimableYield();
+            if (ok && y > 0) {
+                _claimYieldMeasured();
+                liquid = musd.balanceOf(address(this));
+            }
         }
         if (liquid < amount) revert InsufficientLiquidity(amount, liquid);
     }

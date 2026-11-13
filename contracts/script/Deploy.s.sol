@@ -24,7 +24,12 @@ contract Deploy is Script {
     uint256 constant WITHDRAW_COOLDOWN = 1 hours;
     uint256 constant WITHDRAW_WINDOW = 2 days;
     uint256 constant VOTING_PERIOD = 1 hours;
-    uint256 constant QUORUM = 60e18; // veMEZO weight
+    uint256 constant MIN_QUORUM = 60e18; // veMEZO weight floor
+    // Relative quorum is 0 on testnet only: testnet veMEZO totals ~93M voting power while the team's
+    // test locks hold 100. Mainnet sets this to a share of total voting power (e.g. 200 = 2%).
+    uint256 constant QUORUM_BPS = 0;
+    uint256 constant MIN_VOTERS = 2; // distinct veMEZO locks
+    uint256 constant APPROVAL_BPS = 6_000; // 60% of the weight cast must be YES
     uint256 constant MIN_LOCK_TAIL = 1 days;
 
     function run() external {
@@ -46,7 +51,7 @@ contract Deploy is Script {
         );
         pool.setPolicyManager(address(pm));
         ClaimsCourt court =
-            new ClaimsCourt(IERC20(MUSD), pm, IVotingEscrow(VEMEZO), VOTING_PERIOD, QUORUM, MIN_LOCK_TAIL);
+            new ClaimsCourt(IERC20(MUSD), pm, IVotingEscrow(VEMEZO), VOTING_PERIOD, MIN_QUORUM, QUORUM_BPS, MIN_VOTERS, APPROVAL_BPS, MIN_LOCK_TAIL);
         pm.setCourt(address(court));
 
         // Covered products. MUSD core contracts are deliberately excluded: cover paid in MUSD

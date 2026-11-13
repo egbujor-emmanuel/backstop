@@ -15,20 +15,34 @@ contract Handler is Test {
     PolicyManager internal pm;
     ClaimsCourt internal court;
     TestVotingEscrow internal veMEZO;
+    TestVotingEscrow internal veBTC;
+    uint256 internal veBTCProduct;
 
     address[] internal underwriters;
     address internal buyer = makeAddr("h-buyer");
     address[] internal assessors;
     uint256[] public policyIds;
     uint256[] public claimIds;
-    uint256 public paidOut;
 
-    constructor(TestMUSD musd_, BackstopPool pool_, PolicyManager pm_, ClaimsCourt court_, TestVotingEscrow veMEZO_) {
+    constructor(
+        TestMUSD musd_,
+        BackstopPool pool_,
+        PolicyManager pm_,
+        ClaimsCourt court_,
+        TestVotingEscrow veMEZO_,
+        TestVotingEscrow veBTC_,
+        uint256 veBTCProduct_
+    ) {
         musd = musd_;
         pool = pool_;
         pm = pm_;
         court = court_;
         veMEZO = veMEZO_;
+        veBTC = veBTC_;
+        veBTCProduct = veBTCProduct_;
+        for (uint256 i; i < 3; i++) {
+            veBTC.setLock(500 + i, buyer, 1e18, 0, true); // 1 BTC each, worth 70,000 MUSD
+        }
         for (uint256 i; i < 3; i++) {
             address u = makeAddr(string.concat("h-uw", vm.toString(i)));
             underwriters.push(u);
@@ -76,7 +90,19 @@ contract Handler is Test {
         PolicyManager.Product memory p = pm.products(0);
         if (uint256(p.activeCover) + cover > p.capacity) return;
         vm.prank(buyer);
-        policyIds.push(pm.buy(0, cover, duration, 0));
+        policyIds.push(pm.buy(0, cover, duration, 0, type(uint256).max));
+    }
+
+    function buyVeBTC(uint256 which, uint256 cover, uint256 duration) external {
+        uint256 tokenId = 500 + (which % 3);
+        cover = bound(cover, 10e18, 50_000e18);
+        duration = bound(duration, 7 days, 365 days);
+        if (cover > pool.freeCapital()) return;
+        PolicyManager.Product memory p = pm.products(veBTCProduct);
+        if (uint256(p.activeCover) + cover > p.capacity) return;
+        if (cover > pm.insurableValue(veBTCProduct, buyer, tokenId)) return;
+        vm.prank(buyer);
+        policyIds.push(pm.buy(veBTCProduct, cover, duration, tokenId, type(uint256).max));
     }
 
     function fileClaim(uint256 idx, uint256 fraction) external {
@@ -109,10 +135,26 @@ contract Handler is Test {
         uint256 claimId = claimIds[idx % claimIds.length];
         ClaimsCourt.Claim memory c = court.claims(claimId);
         if (c.outcome != ClaimsCourt.Outcome.PENDING || block.timestamp <= c.votingEnds) return;
-        uint256 before = musd.balanceOf(buyer);
-        if (court.finalize(claimId) == ClaimsCourt.Outcome.APPROVED) {
-            paidOut += musd.balanceOf(buyer) - before - c.bond;
-        }
+        court.finalize(claimId);
+    }
+
+    function claimReward(uint256 idx, uint256 who) external {
+        if (claimIds.length == 0) return;
+        uint256 claimId = claimIds[idx % claimIds.length];
+        uint256 tokenId = 100 + (who % 3);
+        if (court.pendingReward(claimId, tokenId) == 0) return;
+        court.claimReward(claimId, tokenId);
+    }
+
+    function retryPayout(uint256 idx) external {
+        if (claimIds.length == 0) return;
+        uint256 claimId = claimIds[idx % claimIds.length];
+        if (!court.claims(claimId).payoutPending) return;
+        court.retryPayout(claimId);
+    }
+
+    function claimCount() external view returns (uint256) {
+        return claimIds.length;
     }
 
     function expire(uint256 idx) external {
@@ -138,7 +180,7 @@ contract InvariantsTest is Fixture {
 
     function setUp() public override {
         super.setUp();
-        handler = new Handler(musd, pool, pm, court, veMEZO);
+        handler = new Handler(musd, pool, pm, court, veMEZO, veBTC, veBTCProduct);
         targetContract(address(handler));
     }
 
@@ -166,8 +208,38 @@ contract InvariantsTest is Fixture {
         assertEq(sum, pool.activeCover());
     }
 
-    /// The court always holds enough MUSD for its reward pool, open bonds and unpaid rewards.
+    /// The pool's internal record of parked principal matches its sMUSD balance.
+    function invariant_parkedMatchesSavings() public view {
+        assertEq(pool.parked(), savings.balanceOf(address(pool)));
+    }
+
+    /// The court always holds its reward pool, every bond it still owes and every unpaid reward.
     function invariant_courtSolvent() public view {
-        assertGe(musd.balanceOf(address(court)), court.rewardPool());
+        uint256 owed = court.rewardPool();
+        for (uint256 i; i < handler.claimCount(); i++) {
+            uint256 claimId = handler.claimIds(i);
+            ClaimsCourt.Claim memory c = court.claims(claimId);
+            if (c.outcome == ClaimsCourt.Outcome.PENDING || c.payoutPending) owed += c.bond;
+            owed += court.bondOwed(claimId);
+            for (uint256 t = 100; t < 103; t++) {
+                owed += court.pendingReward(claimId, t);
+            }
+        }
+        assertGe(musd.balanceOf(address(court)), owed, "court holds every bond and unpaid reward");
+    }
+
+    /// Cover tracked per veBTC position equals the cover of active policies on that position.
+    function invariant_positionCoverMatchesPolicies() public view {
+        for (uint256 t = 500; t < 503; t++) {
+            uint256 sum;
+            for (uint256 i; i < handler.policyCount(); i++) {
+                PolicyManager.Policy memory pol = pm.policies(handler.policyIds(i));
+                if (pol.status == PolicyManager.Status.ACTIVE && pol.productId == veBTCProduct && pol.positionId == t) {
+                    sum += pol.cover;
+                }
+            }
+            bytes32 key = pm.positionKey(PolicyManager.PositionKind.VEBTC, address(0), t);
+            assertEq(pm.insured(key), sum);
+        }
     }
 }

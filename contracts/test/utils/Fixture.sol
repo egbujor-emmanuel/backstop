@@ -17,6 +17,8 @@ abstract contract Fixture is Test {
     uint256 internal constant VOTING_PERIOD = 3 days;
     uint256 internal constant QUORUM = 1_000e18;
     uint256 internal constant MIN_LOCK_TAIL = 7 days;
+    uint256 internal constant MIN_VOTERS = 2;
+    uint256 internal constant APPROVAL_BPS = 6_000;
 
     TestMUSD internal musd;
     TestSavings internal savings;
@@ -65,7 +67,7 @@ abstract contract Fixture is Test {
         );
         pool.setPolicyManager(address(pm));
         court = new ClaimsCourt(
-            IERC20(address(musd)), pm, IVotingEscrow(address(veMEZO)), VOTING_PERIOD, QUORUM, MIN_LOCK_TAIL
+            IERC20(address(musd)), pm, IVotingEscrow(address(veMEZO)), VOTING_PERIOD, QUORUM, 0, MIN_VOTERS, APPROVAL_BPS, MIN_LOCK_TAIL
         );
 
         vm.startPrank(owner);
@@ -105,7 +107,7 @@ abstract contract Fixture is Test {
         returns (uint256 policyId)
     {
         vm.prank(buyer);
-        policyId = pm.buy(productId, cover, duration, positionId);
+        policyId = pm.buy(productId, cover, duration, positionId, type(uint256).max);
     }
 
     function _giveVeMEZO(uint256 tokenId, address to, int128 amount, uint256 end, bool permanent) internal {

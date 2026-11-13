@@ -60,6 +60,7 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
         Status status;
         bool claimOpen;
         uint8 claimsFiled;
+        uint8 freeRetries;
         uint64 start;
         uint64 end;
         uint128 cover;
@@ -75,6 +76,9 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
     /// happened while it was active.
     uint256 public constant CLAIM_GRACE = 14 days;
     uint8 public constant MAX_CLAIMS_PER_POLICY = 2;
+    /// @notice Votes that fail for lack of quorum do not count against MAX_CLAIMS_PER_POLICY, up to
+    /// this many times per policy, so a claimant cannot re-roll indefinitely.
+    uint8 public constant MAX_FREE_RETRIES = 2;
     uint256 public constant PROTOCOL_FEE_BPS = 1_000;
     uint256 public constant ASSESSOR_SHARE_BPS = 500;
     uint256 public constant MAX_RATE_BPS = 5_000;
@@ -93,8 +97,9 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
     mapping(uint256 policyId => Policy) private _policies;
     uint256 public nextPolicyId = 1;
 
-    /// @notice Cover outstanding per product and insured position (veBTC id, or trove owner).
-    mapping(uint256 productId => mapping(bytes32 positionKey => uint256)) public insured;
+    /// @notice Cover outstanding per insured position (veBTC id, or trove owner), summed across
+    /// every product, so one position can never be insured for more than it is worth in total.
+    mapping(bytes32 positionKey => uint256) public insured;
 
     event ProductAdded(uint256 indexed productId, string name, PositionKind kind);
     event ProductUpdated(uint256 indexed productId, uint16 annualRateBps, uint128 capacity, uint128 maxCoverPerPolicy, bool active);
@@ -112,7 +117,7 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
     );
     event PolicyExpired(uint256 indexed policyId);
     event ClaimOpened(uint256 indexed policyId);
-    event ClaimClosed(uint256 indexed policyId);
+    event ClaimClosed(uint256 indexed policyId, bool counted);
     event PolicyPaid(uint256 indexed policyId, address indexed holder, uint256 amount);
 
     error ZeroAddress();
@@ -132,6 +137,13 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
     error ClaimAlreadyOpen();
     error TooManyClaims();
     error ClaimWindowOpen();
+    error PremiumTooHigh(uint256 premium, uint256 maxPremium);
+    error ZeroPremium();
+    error CourtNotSet();
+    error BadAmount();
+    error PriceUnavailable();
+    error LockEndsBeforePolicy();
+    error RenounceDisabled();
     error Soulbound();
 
     modifier onlyCourt() {
@@ -240,11 +252,25 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
     /// @notice Premium for `cover` MUSD over `duration` seconds, rounded up.
     function quote(uint256 productId, uint256 cover, uint256 duration) public view returns (uint256) {
         Product storage p = _product(productId);
-        return Math.mulDiv(cover, uint256(p.annualRateBps) * duration, BPS * 365 days, Math.Rounding.Ceil);
+        uint256 base = Math.mulDiv(cover, uint256(p.annualRateBps) * duration, BPS * 365 days, Math.Rounding.Ceil);
+        return Math.mulDiv(base, utilizationMultiplierBps(cover), BPS, Math.Rounding.Ceil);
     }
 
-    /// @notice MUSD value of a position at MUSD's PriceFeed, minus cover already sold on it
-    /// under this product. Returns type(uint256).max for products not bound to a position.
+    /// @notice Premium multiplier from pool utilization: the average of 1 + 4u^2 over the
+    /// utilization this purchase moves the pool through, from u0 (before) to u1 (after). That is
+    /// 1 + 4(u0^2 + u0*u1 + u1^2)/3: 1x on an idle pool, 5x at the margin of a full one, and the
+    /// same total whether cover is bought at once or in pieces.
+    function utilizationMultiplierBps(uint256 cover) public view returns (uint256) {
+        uint256 assets = pool.totalAssets();
+        uint256 active = pool.activeCover();
+        uint256 u0 = assets == 0 ? BPS : Math.min(BPS, Math.mulDiv(active, BPS, assets));
+        uint256 u1 = assets == 0 ? BPS : Math.min(BPS, Math.mulDiv(active + cover, BPS, assets));
+        return BPS + Math.mulDiv(4, u0 * u0 + u0 * u1 + u1 * u1, 3 * BPS);
+    }
+
+    /// @notice MUSD value of a position at MUSD's PriceFeed, minus cover already sold on that
+    /// position across every product. Returns type(uint256).max for products not bound to a
+    /// position.
     function insurableValue(uint256 productId, address holder, uint256 positionId)
         public
         view
@@ -252,27 +278,32 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
     {
         Product storage p = _product(productId);
         if (p.kind == PositionKind.NONE) return type(uint256).max;
-        uint256 value = _positionValue(p.kind, holder, positionId);
-        uint256 already = insured[productId][_positionKey(p.kind, holder, positionId)];
+        uint256 value = _positionValue(p.kind, holder, positionId, 0);
+        uint256 already = insured[_positionKey(p.kind, holder, positionId)];
         return value > already ? value - already : 0;
     }
 
-    function buy(uint256 productId, uint256 cover, uint256 duration, uint256 positionId)
+    /// @notice Buy `cover` MUSD of cover on a product for `duration` seconds. `positionId` is the
+    /// veBTC token id for veBTC products and 0 otherwise. Reverts if the premium (see quote) is
+    /// above `maxPremium`, which protects against pool utilization moving before inclusion.
+    function buy(uint256 productId, uint256 cover, uint256 duration, uint256 positionId, uint256 maxPremium)
         external
         nonReentrant
         whenNotPaused
         returns (uint256 policyId)
     {
+        if (court == address(0)) revert CourtNotSet();
         Product storage p = _product(productId);
         if (!p.active) revert ProductInactive();
         if (cover < MIN_COVER || cover > p.maxCoverPerPolicy) revert BadCover();
         if (duration < MIN_DURATION || duration > MAX_DURATION) revert BadDuration();
         if (uint256(p.activeCover) + cover > p.capacity) revert CapacityExceeded();
 
-        _recordInsurableInterest(productId, p.kind, positionId, cover);
+        _recordInsurableInterest(p.kind, positionId, cover, duration);
 
         uint256 premium = quote(productId, cover, duration);
-        if (premium == 0) revert BadCover();
+        if (premium == 0) revert ZeroPremium();
+        if (premium > maxPremium) revert PremiumTooHigh(premium, maxPremium);
 
         policyId = _createPolicy(productId, cover, duration, positionId, premium);
         p.activeCover += SafeCast.toUint128(cover);
@@ -285,21 +316,21 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
     }
 
     function _recordInsurableInterest(
-        uint256 productId,
         PositionKind kind,
         uint256 positionId,
-        uint256 cover
+        uint256 cover,
+        uint256 duration
     ) internal {
         if (kind == PositionKind.NONE) {
             if (positionId != 0) revert BadPositionId();
             return;
         }
         bytes32 key = _positionKey(kind, msg.sender, positionId);
-        uint256 value = _positionValue(kind, msg.sender, positionId);
-        uint256 already = insured[productId][key];
+        uint256 value = _positionValue(kind, msg.sender, positionId, block.timestamp + duration);
+        uint256 already = insured[key];
         uint256 available = value > already ? value - already : 0;
         if (cover > available) revert ExceedsPositionValue(cover, available);
-        insured[productId][key] = already + cover;
+        insured[key] = already + cover;
     }
 
     function _createPolicy(
@@ -317,6 +348,7 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
             status: Status.ACTIVE,
             claimOpen: false,
             claimsFiled: 0,
+            freeRetries: 0,
             start: start,
             end: end,
             cover: SafeCast.toUint128(cover),
@@ -328,7 +360,6 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
     }
 
     function _distributePremium(uint256 premium) internal {
-        if (court == address(0)) revert ZeroAddress();
         musd.safeTransferFrom(msg.sender, address(this), premium);
         uint256 fee = Math.mulDiv(premium, PROTOCOL_FEE_BPS, BPS);
         uint256 assessorCut = Math.mulDiv(premium, ASSESSOR_SHARE_BPS, BPS);
@@ -364,15 +395,23 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
         emit ClaimOpened(policyId);
     }
 
-    function closeClaim(uint256 policyId) external onlyCourt {
+    /// @param countAttempt false when the vote failed for lack of quorum: the claimant did nothing
+    /// wrong, so the attempt is not counted against the two-claim limit.
+    function closeClaim(uint256 policyId, bool countAttempt) external onlyCourt {
         Policy storage pol = _activePolicy(policyId);
         pol.claimOpen = false;
-        emit ClaimClosed(policyId);
+        bool counted = true;
+        if (!countAttempt && pol.freeRetries < MAX_FREE_RETRIES) {
+            pol.claimsFiled -= 1;
+            pol.freeRetries += 1;
+            counted = false;
+        }
+        emit ClaimClosed(policyId, counted);
     }
 
     function settleAssessedClaim(uint256 policyId, uint256 amount) external onlyCourt nonReentrant {
         Policy storage pol = _activePolicy(policyId);
-        if (amount == 0 || amount > pol.cover) revert BadCover();
+        if (amount == 0 || amount > pol.cover) revert BadAmount();
         _settle(policyId, pol, amount);
     }
 
@@ -404,7 +443,7 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
             '<text x="24" y="44" fill="#f5a524" font-family="monospace" font-size="20">BACKSTOP #',
             policyId.toString(),
             '</text><text x="24" y="84" fill="#e8e6df" font-family="monospace" font-size="14">',
-            p.name,
+            _escapeXml(p.name),
             '</text><text x="24" y="124" fill="#e8e6df" font-family="monospace" font-size="14">Cover ',
             (uint256(pol.cover) / 1e18).toString(),
             ' MUSD</text><text x="24" y="164" fill="#9a978d" font-family="monospace" font-size="12">Ends ',
@@ -432,6 +471,7 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
         pol.claimOpen = false;
         _release(pol);
         pool.payClaim(pol.holder, amount, pol.cover);
+        emit ClaimClosed(policyId, true);
         emit PolicyPaid(policyId, pol.holder, amount);
     }
 
@@ -441,11 +481,12 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
         p.activeCover -= pol.cover;
         if (p.kind != PositionKind.NONE) {
             bytes32 key = _positionKey(p.kind, pol.holder, pol.positionId);
-            insured[pol.productId][key] -= pol.cover;
+            insured[key] -= pol.cover;
         }
     }
 
-    function _positionValue(PositionKind kind, address holder, uint256 positionId)
+    /// @param minEnd for veBTC: the lock must be permanent or end at or after this time (0 = no check).
+    function _positionValue(PositionKind kind, address holder, uint256 positionId, uint256 minEnd)
         internal
         view
         returns (uint256)
@@ -454,16 +495,45 @@ contract PolicyManager is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
         if (kind == PositionKind.VEBTC) {
             // veBTC.ownerOf returns address(0) for unknown ids instead of reverting.
             if (veBTC.ownerOf(positionId) != holder) revert NotPositionOwner();
-            int128 amount = veBTC.locked(positionId).amount;
-            if (amount <= 0) revert EmptyPosition();
-            btcAmount = uint256(int256(amount));
+            IVotingEscrow.LockedBalance memory l = veBTC.locked(positionId);
+            if (l.amount <= 0) revert EmptyPosition();
+            if (minEnd != 0 && !l.isPermanent && l.end < minEnd) revert LockEndsBeforePolicy();
+            btcAmount = uint256(int256(l.amount));
         } else {
             if (positionId != 0) revert BadPositionId();
             if (troveManager.getTroveStatus(holder) != ITroveManager.Status.active) revert NotPositionOwner();
             btcAmount = troveManager.getTroveColl(holder);
             if (btcAmount == 0) revert EmptyPosition();
         }
-        return Math.mulDiv(btcAmount, priceFeed.fetchPrice(), 1e18);
+        uint256 price = priceFeed.fetchPrice();
+        if (price == 0) revert PriceUnavailable();
+        return Math.mulDiv(btcAmount, price, 1e18);
+    }
+
+    /// @notice Key under which cover on a position is tracked in `insured`.
+    function positionKey(PositionKind kind, address holder, uint256 positionId) external pure returns (bytes32) {
+        return _positionKey(kind, holder, positionId);
+    }
+
+    /// @dev Escapes the five XML special characters for the on-chain SVG.
+    function _escapeXml(string memory input) internal pure returns (string memory) {
+        bytes memory b = bytes(input);
+        bytes memory out;
+        for (uint256 i; i < b.length; i++) {
+            bytes1 ch = b[i];
+            if (ch == "<") out = abi.encodePacked(out, "&lt;");
+            else if (ch == ">") out = abi.encodePacked(out, "&gt;");
+            else if (ch == "&") out = abi.encodePacked(out, "&amp;");
+            else if (ch == '"') out = abi.encodePacked(out, "&quot;");
+            else if (ch == "'") out = abi.encodePacked(out, "&apos;");
+            else out = abi.encodePacked(out, ch);
+        }
+        return string(out);
+    }
+
+    /// @notice Ownership cannot be renounced: product curation and pausing must stay possible.
+    function renounceOwnership() public view override onlyOwner {
+        revert RenounceDisabled();
     }
 
     function _positionKey(PositionKind kind, address holder, uint256 positionId)

@@ -40,7 +40,7 @@ contract MezoTestnetForkTest is Test {
         pool = new BackstopPool(MUSD, SMUSD, 1 hours, 2 days);
         pm = new PolicyManager(owner, MUSD, pool, TROVES, FEED, VEBTC, treasury);
         pool.setPolicyManager(address(pm));
-        court = new ClaimsCourt(MUSD, pm, VEMEZO, 1 hours, 1e18, 1 days);
+        court = new ClaimsCourt(MUSD, pm, VEMEZO, 1 hours, 1e18, 0, 1, 6_000, 1 days);
         vm.startPrank(owner);
         pm.setCourt(address(court));
         pm.addProduct("veBTC lock exploit", "ipfs://vebtc", 300, PolicyManager.PositionKind.VEBTC, 1_000_000e18, 100_000e18);
@@ -90,11 +90,11 @@ contract MezoTestnetForkTest is Test {
         revert("no veBTC lock found");
     }
 
-    function _veMEZOVoter(uint256 votingEnds, address exclude) internal view returns (uint256 id, address holder) {
+    function _veMEZOVoter(uint256 claimId, address exclude) internal view returns (uint256 id, address holder) {
         for (id = 1; id <= 951; id++) {
             holder = VEMEZO.ownerOf(id);
             if (holder == address(0) || holder == exclude || holder.code.length != 0) continue;
-            if (court.voteWeight(id, votingEnds) > 0) return (id, holder);
+            if (court.voteWeight(claimId, id) > 0) return (id, holder);
         }
         revert("no veMEZO voter found");
     }
@@ -129,7 +129,7 @@ contract MezoTestnetForkTest is Test {
         vm.startPrank(borrower);
         MUSD.approve(address(pm), type(uint256).max);
         MUSD.approve(address(court), type(uint256).max);
-        policyId = pm.buy(1, cover, 30 days, 0);
+        policyId = pm.buy(1, cover, 30 days, 0, type(uint256).max);
         vm.stopPrank();
         console2.log("trove owner", borrower);
         console2.log("trove cover (MUSD)", cover / 1e18);
@@ -147,7 +147,7 @@ contract MezoTestnetForkTest is Test {
         deal(address(MUSD), veHolder, 1_000e18);
         vm.startPrank(veHolder);
         MUSD.approve(address(pm), type(uint256).max);
-        pm.buy(0, cover, 30 days, veId);
+        pm.buy(0, cover, 30 days, veId, type(uint256).max);
         vm.stopPrank();
     }
 
@@ -157,15 +157,21 @@ contract MezoTestnetForkTest is Test {
         vm.prank(borrower);
         uint256 claimId = court.fileClaim(policyId, cover, block.timestamp - 1, "ipfs://fork-drill");
         uint256 ends = court.claims(claimId).votingEnds;
-        (uint256 mezoId, address voter) = _veMEZOVoter(ends, borrower);
+        (uint256 mezoId, address voter) = _veMEZOVoter(claimId, borrower);
         console2.log("veMEZO voter id", mezoId);
-        console2.log("vote weight", court.voteWeight(mezoId, ends) / 1e18);
+        console2.log("vote weight", court.voteWeight(claimId, mezoId) / 1e18);
         vm.prank(voter);
         court.vote(claimId, mezoId, true);
 
         _warp(ends + 1);
         uint256 balBefore = MUSD.balanceOf(borrower);
+        uint256 gasBefore = gasleft();
         assertEq(uint8(court.finalize(claimId)), uint8(ClaimsCourt.Outcome.APPROVED));
+        uint256 finalizeGas = gasBefore - gasleft();
+        console2.log("finalize gas, payout from real sMUSD included", finalizeGas);
+        // The payout must fit easily inside the gas finalize guarantees it (MIN_PAYOUT_GAS).
+        assertLt(finalizeGas, court.MIN_PAYOUT_GAS() * 3 / 4, "payout fits the reserved gas");
+        assertFalse(court.claims(claimId).payoutPending, "paid in the same call, not deferred");
         assertEq(MUSD.balanceOf(borrower) - balBefore, cover + court.bondFor(cover), "payout + bond");
         assertGe(pool.grossAssets(), pool.activeCover(), "remaining cover backed");
     }
