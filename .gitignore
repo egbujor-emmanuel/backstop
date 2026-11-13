@@ -7,3 +7,4 @@ node_modules/
 *.log
 app/dist/
 .vercel
+contracts/broadcast/**/*.lock
