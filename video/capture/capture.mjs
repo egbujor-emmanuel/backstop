@@ -259,15 +259,17 @@ async function walkthrough(page) {
   await glide(page, page.getByRole("button", { name: /file claim|file a claim|approve/i }).last(), "file button");
   await wait(page, 2200);
 
-  // s7: decided claims: one approved and paid, one rejected.
+  // s7: decided claims, newest first: the veBTC claim (DRILL-003) approved and paid, the halt claim
+  // rejected, the Tigris claim approved and paid. Each card holds long enough to read its verdict.
   mark("s7");
   await page.mouse.wheel(0, -6000);
   await wait(page, 1800);
   const cards = page.locator("article");
-  await glide(page, cards.nth(1), "claim #0 card");
-  await wait(page, 3000);
-  await glide(page, cards.nth(0), "claim #1 card");
-  await wait(page, 2500);
+  const count = await cards.count();
+  for (let i = 0; i < Math.min(count, 3); i++) {
+    await glide(page, cards.nth(i), `claim card ${i}`);
+    await wait(page, 3800);
+  }
 
   // s8: proof.
   mark("s8");

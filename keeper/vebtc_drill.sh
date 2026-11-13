@@ -32,6 +32,7 @@ LOCK_SECONDS=2419200            # 28 days, veBTC's maximum lock
 COVER=100$E18                  # 100 MUSD
 DURATION=604800                 # 7 days, inside the lock
 MAXP=$(( 2**62 ))000000
+VEBTC_PRODUCT=5                 # product #0 named a stale mainnet veBTC; #5 names the live one (policy #8 was sold under #0)
 
 send() { # label, private key, then cast send args; prints the tx hash
   local label="$1" pk="$2"; shift 2
@@ -74,12 +75,12 @@ print(ids[0])" | tr -d '\r')
     [ -n "$LOCK_ID" ] || die "could not read the new veBTC token id"
     state_set lockId "$LOCK_ID"
   fi
-  echo "veBTC lock #$LOCK_ID, insurable value $(call "$PM" "insurableValue(uint256,address,uint256)(uint256)" 0 "$DEPLOYER_ADDRESS" "$LOCK_ID") wei MUSD" >&2
+  echo "veBTC lock #$LOCK_ID, insurable value $(call "$PM" "insurableValue(uint256,address,uint256)(uint256)" $VEBTC_PRODUCT "$DEPLOYER_ADDRESS" "$LOCK_ID") wei MUSD" >&2
   POLICY=$(state_get policyId)
   if [ -z "$POLICY" ]; then
     POLICY=$(call "$PM" "nextPolicyId()(uint256)")
     send "lock holder approves policy manager for the veBTC premium" "$DEPLOYER_PRIVATE_KEY" $MUSD "approve(address,uint256)" "$PM" 10$E18 >/dev/null
-    send "lock holder insures veBTC lock #$LOCK_ID: 100 MUSD, 7 days (policy #$POLICY)" "$DEPLOYER_PRIVATE_KEY" "$PM" "buy(uint256,uint256,uint256,uint256,uint256)" 0 $COVER $DURATION "$LOCK_ID" "$MAXP" >/dev/null
+    send "lock holder insures veBTC lock #$LOCK_ID: 100 MUSD, 7 days (policy #$POLICY)" "$DEPLOYER_PRIVATE_KEY" "$PM" "buy(uint256,uint256,uint256,uint256,uint256)" $VEBTC_PRODUCT $COVER $DURATION "$LOCK_ID" "$MAXP" >/dev/null
     state_set policyId "$POLICY"
   fi
   echo "veBTC policy #$POLICY" >&2

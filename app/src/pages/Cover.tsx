@@ -83,6 +83,8 @@ export default function Cover() {
         {/* Products */}
         <section aria-label="Products" className="flex flex-col gap-3">
           {products.map((p, i) => {
+            // Paused products keep their policies (shown below) but are not offered for sale.
+            if (!p.active) return null;
             const used = p.capacity > 0n ? Number((p.activeCover * 10_000n) / p.capacity) : 0;
             const selected = i === productId;
             return (

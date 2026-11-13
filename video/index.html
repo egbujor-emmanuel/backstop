@@ -3,59 +3,170 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1080" />
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <script src="assets/gsap.min.js"></script>
     <style>
-      /* Placeholders: replace all three with the film's own palette and display face. */
+      @font-face {
+        font-family: "Instrument Serif";
+        src: url("assets/fonts/instrument-serif-latin-400-normal.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Instrument Serif";
+        src: url("assets/fonts/instrument-serif-latin-400-italic.woff2") format("woff2");
+        font-weight: 400;
+        font-style: italic;
+      }
       :root {
-        --ground: #000;
-        --ink: #ffffff;
-        --font-display: sans-serif;
+        --ink: #0b0d0c;
+        --paper: #ecebe4;
+        --muted: #a3a197;
+        --amber: #f5a524;
       }
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--ink); }
+      #root { position: relative; width: 1920px; height: 1080px; background: var(--ink); font-family: "Inter", sans-serif; }
+      .ground { position: absolute; inset: 0; background: var(--ink); }
+      .footage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+
+      /* Step label: sits above the caption band, inside the action-safe box. */
+      .label-host { position: absolute; left: 96px; bottom: 236px; width: auto; height: auto; }
+      .label {
+        display: inline-flex; align-items: center; gap: 14px; padding: 14px 22px 14px 0;
+        background: rgba(11, 13, 12, 0.92); border: 1px solid #2a2f2b; border-radius: 14px; overflow: hidden;
+        font-family: "JetBrains Mono", monospace; font-size: 22px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--paper);
       }
-      html,
-      body {
-        margin: 0;
-        width: 1920px;
-        height: 1080px;
-        overflow: hidden;
-        background: var(--ground);
+      .label-stripe {
+        display: block; width: 14px; align-self: stretch; margin-right: 6px;
+        background-image: repeating-linear-gradient(-45deg, var(--amber) 0 10px, transparent 10px 20px);
       }
-      #root {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: var(--font-display);
+      .label-num { color: var(--amber); }
+      .label-sep { color: var(--muted); }
+
+      /* Captions: one line group at a time, inside title-safe, never moving while read. */
+      .cap-host { position: absolute; left: 0; right: 0; bottom: 108px; display: flex; justify-content: center; }
+      .cap {
+        max-width: 1400px; padding: 16px 28px; border-radius: 18px; background: rgba(11, 13, 12, 0.86);
+        font-family: "Inter", sans-serif; font-weight: 500; font-size: 34px; line-height: 1.25; color: var(--paper); text-align: center;
       }
-      #title {
-        color: var(--ink);
-        font-size: 72px;
-        font-weight: 600;
-        letter-spacing: -0.03em;
+
+      /* Hook number over the October 5 positions. */
+      .hook-host { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; padding-right: 150px; }
+      .hook-num {
+        font-family: "Instrument Serif", serif; font-size: 220px; line-height: 1; letter-spacing: -0.01em; color: var(--amber);
+        background: rgba(11, 13, 12, 0.88); padding: 24px 48px 34px; border-radius: 24px;
       }
+
+      /* End card. */
+      .end-host { position: absolute; inset: 0; background: var(--ink); display: flex; flex-direction: column; justify-content: center; padding-left: 192px; }
+      .end-stripe {
+        position: absolute; left: 0; right: 0; top: 0; height: 18px; transform-origin: left center;
+        background-image: repeating-linear-gradient(-45deg, var(--amber) 0 14px, transparent 14px 28px);
+      }
+      .end-mark { font-family: "Instrument Serif", serif; font-size: 72px; letter-spacing: 0.02em; color: var(--paper); }
+      .end-line { margin-top: 24px; max-width: 1400px; font-family: "Instrument Serif", serif; font-size: 120px; line-height: 1.02; letter-spacing: -0.01em; color: var(--paper); }
+      .end-line em { color: var(--amber); }
+      .end-url { margin-top: 48px; font-family: "JetBrains Mono", monospace; font-size: 30px; letter-spacing: 0.04em; color: var(--muted); }
     </style>
   </head>
   <body>
-    <div
-      id="root"
-      data-composition-id="main"
-      data-start="0"
-      data-duration="10"
-      data-width="1920"
-      data-height="1080"
-    >
-      <h1 id="title" class="clip" data-start="0" data-duration="10" data-track-index="0">Title</h1>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="98.829" data-width="1920" data-height="1080">
+      <div class="ground"></div>
+      <video id="v-s1" class="clip footage" data-start="0.000" data-duration="13.723" data-track-index="1" muted playsinline src="assets/clips/s1.mp4"></video>
+      <video id="v-s2" class="clip footage" data-start="13.723" data-duration="11.184" data-track-index="1" muted playsinline src="assets/clips/s2.mp4"></video>
+      <video id="v-s3" class="clip footage" data-start="24.907" data-duration="6.725" data-track-index="1" muted playsinline src="assets/clips/s3.mp4"></video>
+      <video id="v-s4" class="clip footage" data-start="31.632" data-duration="11.931" data-track-index="1" muted playsinline src="assets/clips/s4.mp4"></video>
+      <video id="v-s5" class="clip footage" data-start="43.563" data-duration="11.611" data-track-index="1" muted playsinline src="assets/clips/s5.mp4"></video>
+      <video id="v-s6" class="clip footage" data-start="55.174" data-duration="12.293" data-track-index="1" muted playsinline src="assets/clips/s6.mp4"></video>
+      <video id="v-s7" class="clip footage" data-start="67.467" data-duration="14.384" data-track-index="1" muted playsinline src="assets/clips/s7.mp4"></video>
+      <video id="v-s8" class="clip footage" data-start="81.851" data-duration="10.885" data-track-index="1" muted playsinline src="assets/clips/s8.mp4"></video>
+      <audio id="voice-s1" class="clip" data-start="0.500" data-duration="12.523" data-track-index="2" data-volume="1" src="assets/voice/s1.wav"></audio>
+      <audio id="voice-s2" class="clip" data-start="14.223" data-duration="9.984" data-track-index="2" data-volume="1" src="assets/voice/s2.wav"></audio>
+      <audio id="voice-s3" class="clip" data-start="25.407" data-duration="5.525" data-track-index="2" data-volume="1" src="assets/voice/s3.wav"></audio>
+      <audio id="voice-s4" class="clip" data-start="32.132" data-duration="10.731" data-track-index="2" data-volume="1" src="assets/voice/s4.wav"></audio>
+      <audio id="voice-s5" class="clip" data-start="44.063" data-duration="10.411" data-track-index="2" data-volume="1" src="assets/voice/s5.wav"></audio>
+      <audio id="voice-s6" class="clip" data-start="55.674" data-duration="11.093" data-track-index="2" data-volume="1" src="assets/voice/s6.wav"></audio>
+      <audio id="voice-s7" class="clip" data-start="67.967" data-duration="13.184" data-track-index="2" data-volume="1" src="assets/voice/s7.wav"></audio>
+      <audio id="voice-s8" class="clip" data-start="82.351" data-duration="9.685" data-track-index="2" data-volume="1" src="assets/voice/s8.wav"></audio>
+      <audio id="voice-s9" class="clip" data-start="93.236" data-duration="3.093" data-track-index="2" data-volume="1" src="assets/voice/s9.wav"></audio>
+      <div id="hook" class="clip hook-host" data-start="0.000" data-duration="13.723" data-track-index="5"><p id="hook-num" class="hook-num">$472,476</p></div>
+      <div id="label-s3" class="clip label-host" data-start="24.907" data-duration="6.725" data-track-index="3"><div id="label-s3-in" class="label"><i class="label-stripe"></i><span class="label-num">Step 1</span><span class="label-sep">·</span><span>Connect</span></div></div>
+      <div id="label-s4" class="clip label-host" data-start="31.632" data-duration="11.931" data-track-index="3"><div id="label-s4-in" class="label"><i class="label-stripe"></i><span class="label-num">Step 2</span><span class="label-sep">·</span><span>Buy cover</span></div></div>
+      <div id="label-s5" class="clip label-host" data-start="43.563" data-duration="11.611" data-track-index="3"><div id="label-s5-in" class="label"><i class="label-stripe"></i><span class="label-num">Step 3</span><span class="label-sep">·</span><span>Underwrite</span></div></div>
+      <div id="label-s6" class="clip label-host" data-start="55.174" data-duration="12.293" data-track-index="3"><div id="label-s6-in" class="label"><i class="label-stripe"></i><span class="label-num">Step 4</span><span class="label-sep">·</span><span>File a claim</span></div></div>
+      <div id="label-s7" class="clip label-host" data-start="67.467" data-duration="14.384" data-track-index="3"><div id="label-s7-in" class="label"><i class="label-stripe"></i><span class="label-num">Step 5</span><span class="label-sep">·</span><span>veMEZO holders decide</span></div></div>
+      <div id="label-s8" class="clip label-host" data-start="81.851" data-duration="10.885" data-track-index="3"><div id="label-s8-in" class="label"><i class="label-stripe"></i><span>Check it yourself</span></div></div>
+      <div id="captions" data-track-kind="captions">
+        <div id="cap-s1-0" class="clip cap-host" data-start="0.500" data-duration="4.356" data-track-index="4"><p id="cap-s1-0-in" class="cap">On October 5, an attacker drained 37 locked</p></div>
+        <div id="cap-s1-1" class="clip cap-host" data-start="4.856" data-duration="4.356" data-track-index="4"><p id="cap-s1-1-in" class="cap">bitcoin positions on Mezo, worth about $470,000. Mezo</p></div>
+        <div id="cap-s1-2" class="clip cap-host" data-start="9.211" data-duration="3.811" data-track-index="4"><p id="cap-s1-2-in" class="cap">paid everyone back from its own funds.</p></div>
+        <div id="cap-s2-0" class="clip cap-host" data-start="14.223" data-duration="3.195" data-track-index="4"><p id="cap-s2-0-in" class="cap">BACKSTOP is insurance for your money on Mezo.</p></div>
+        <div id="cap-s2-1" class="clip cap-host" data-start="17.418" data-duration="3.195" data-track-index="4"><p id="cap-s2-1-in" class="cap">You pay a small fee. If something goes</p></div>
+        <div id="cap-s2-2" class="clip cap-host" data-start="20.613" data-duration="3.594" data-track-index="4"><p id="cap-s2-2-in" class="cap">wrong, you get paid back in MUSD, Mezo&#x27;s dollar.</p></div>
+        <div id="cap-s3-0" class="clip cap-host" data-start="25.407" data-duration="2.600" data-track-index="4"><p id="cap-s3-0-in" class="cap">Step 1. Open the app and connect your</p></div>
+        <div id="cap-s3-1" class="clip cap-host" data-start="28.007" data-duration="2.925" data-track-index="4"><p id="cap-s3-1-in" class="cap">wallet. It switches you to Mezo testnet for you.</p></div>
+        <div id="cap-s4-0" class="clip cap-host" data-start="32.132" data-duration="2.769" data-track-index="4"><p id="cap-s4-0-in" class="cap">Step 2. Pick what you want to protect,</p></div>
+        <div id="cap-s4-1" class="clip cap-host" data-start="34.901" data-duration="2.769" data-track-index="4"><p id="cap-s4-1-in" class="cap">type how much, and for how many days.</p></div>
+        <div id="cap-s4-2" class="clip cap-host" data-start="37.670" data-duration="2.769" data-track-index="4"><p id="cap-s4-2-in" class="cap">The app shows your price. Approve, buy, and</p></div>
+        <div id="cap-s4-3" class="clip cap-host" data-start="40.440" data-duration="2.423" data-track-index="4"><p id="cap-s4-3-in" class="cap">your policy appears, tied to your wallet.</p></div>
+        <div id="cap-s5-0" class="clip cap-host" data-start="44.063" data-duration="3.331" data-track-index="4"><p id="cap-s5-0-in" class="cap">Want to earn instead? Step 3. Deposit MUSD</p></div>
+        <div id="cap-s5-1" class="clip cap-host" data-start="47.394" data-duration="3.331" data-track-index="4"><p id="cap-s5-1-in" class="cap">into the pool. You earn the fees buyers</p></div>
+        <div id="cap-s5-2" class="clip cap-host" data-start="50.726" data-duration="3.748" data-track-index="4"><p id="cap-s5-2-in" class="cap">pay, plus Mezo&#x27;s savings interest while your money waits.</p></div>
+        <div id="cap-s6-0" class="clip cap-host" data-start="55.674" data-duration="2.773" data-track-index="4"><p id="cap-s6-0-in" class="cap">If something goes wrong, step 4. File a</p></div>
+        <div id="cap-s6-1" class="clip cap-host" data-start="58.447" data-duration="2.773" data-track-index="4"><p id="cap-s6-1-in" class="cap">claim. Say how much you lost, link your</p></div>
+        <div id="cap-s6-2" class="clip cap-host" data-start="61.221" data-duration="2.773" data-track-index="4"><p id="cap-s6-2-in" class="cap">proof, and put down a small deposit, which</p></div>
+        <div id="cap-s6-3" class="clip cap-host" data-start="63.994" data-duration="2.773" data-track-index="4"><p id="cap-s6-3-in" class="cap">you get back unless the claim is rejected.</p></div>
+        <div id="cap-s7-0" class="clip cap-host" data-start="67.967" data-duration="3.102" data-track-index="4"><p id="cap-s7-0-in" class="cap">Step 5. People who hold veMEZO, Mezo&#x27;s long-term</p></div>
+        <div id="cap-s7-1" class="clip cap-host" data-start="71.069" data-duration="3.102" data-track-index="4"><p id="cap-s7-1-in" class="cap">voters, check the proof and vote. If at</p></div>
+        <div id="cap-s7-2" class="clip cap-host" data-start="74.171" data-duration="3.102" data-track-index="4"><p id="cap-s7-2-in" class="cap">least 60% say yes, the pool pays you,</p></div>
+        <div id="cap-s7-3" class="clip cap-host" data-start="77.273" data-duration="3.878" data-track-index="4"><p id="cap-s7-3-in" class="cap">and the voters who got it right share a reward.</p></div>
+        <div id="cap-s8-0" class="clip cap-host" data-start="82.351" data-duration="3.369" data-track-index="4"><p id="cap-s8-0-in" class="cap">Everything you just saw is real, on Mezo</p></div>
+        <div id="cap-s8-1" class="clip cap-host" data-start="85.720" data-duration="3.369" data-track-index="4"><p id="cap-s8-1-in" class="cap">testnet. The Proof page lists every contract and</p></div>
+        <div id="cap-s8-2" class="clip cap-host" data-start="89.089" data-duration="2.948" data-track-index="4"><p id="cap-s8-2-in" class="cap">every transaction, so anyone can check it.</p></div>
+      </div>
+      <div id="endcard" class="clip end-host" data-start="92.736" data-duration="6.093" data-track-index="6"><div id="end-stripe" class="end-stripe"></div><p id="end-mark" class="end-mark">BACKSTOP</p><p id="end-line" class="end-line">When Mezo has a bad day, you're <em>covered.</em></p><p id="end-url" class="end-url">backstop-pearl.vercel.app · live on Mezo testnet</p></div>
     </div>
     <script>
+      window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
-      // Example: tl.fromTo("#title", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power4.out" }, 0);
+      tl.fromTo("#cap-s1-0-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 0.500);
+      tl.fromTo("#cap-s1-1-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 4.856);
+      tl.fromTo("#cap-s1-2-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 9.211);
+      tl.fromTo("#hook-num", {scale: 1.12, opacity: 0}, {scale: 1, opacity: 1, duration: 0.33, ease: "power4.out"}, 1.200);
+      tl.fromTo("#cap-s2-0-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 14.223);
+      tl.fromTo("#cap-s2-1-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 17.418);
+      tl.fromTo("#cap-s2-2-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 20.613);
+      tl.fromTo("#label-s3-in", {x: -40, opacity: 0}, {x: 0, opacity: 1, duration: 0.4, ease: "power3.out"}, 25.057);
+      tl.fromTo("#cap-s3-0-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 25.407);
+      tl.fromTo("#cap-s3-1-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 28.007);
+      tl.fromTo("#label-s4-in", {x: -40, opacity: 0}, {x: 0, opacity: 1, duration: 0.4, ease: "power3.out"}, 31.782);
+      tl.fromTo("#cap-s4-0-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 32.132);
+      tl.fromTo("#cap-s4-1-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 34.901);
+      tl.fromTo("#cap-s4-2-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 37.670);
+      tl.fromTo("#cap-s4-3-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 40.440);
+      tl.fromTo("#label-s5-in", {x: -40, opacity: 0}, {x: 0, opacity: 1, duration: 0.4, ease: "power3.out"}, 43.713);
+      tl.fromTo("#cap-s5-0-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 44.063);
+      tl.fromTo("#cap-s5-1-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 47.394);
+      tl.fromTo("#cap-s5-2-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 50.726);
+      tl.fromTo("#label-s6-in", {x: -40, opacity: 0}, {x: 0, opacity: 1, duration: 0.4, ease: "power3.out"}, 55.324);
+      tl.fromTo("#cap-s6-0-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 55.674);
+      tl.fromTo("#cap-s6-1-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 58.447);
+      tl.fromTo("#cap-s6-2-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 61.221);
+      tl.fromTo("#cap-s6-3-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 63.994);
+      tl.fromTo("#label-s7-in", {x: -40, opacity: 0}, {x: 0, opacity: 1, duration: 0.4, ease: "power3.out"}, 67.617);
+      tl.fromTo("#cap-s7-0-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 67.967);
+      tl.fromTo("#cap-s7-1-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 71.069);
+      tl.fromTo("#cap-s7-2-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 74.171);
+      tl.fromTo("#cap-s7-3-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 77.273);
+      tl.fromTo("#label-s8-in", {x: -40, opacity: 0}, {x: 0, opacity: 1, duration: 0.4, ease: "power3.out"}, 82.001);
+      tl.fromTo("#cap-s8-0-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 82.351);
+      tl.fromTo("#cap-s8-1-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 85.720);
+      tl.fromTo("#cap-s8-2-in", {opacity: 0}, {opacity: 1, duration: 0.13, ease: "none"}, 89.089);
+      tl.fromTo("#end-stripe", {scaleX: 0}, {scaleX: 1, duration: 0.6, ease: "power3.inOut"}, 92.786);
+      tl.fromTo("#end-mark", {y: 30, opacity: 0}, {y: 0, opacity: 1, duration: 0.47, ease: "power3.out"}, 93.086);
+      tl.fromTo("#end-line", {y: 30, opacity: 0}, {y: 0, opacity: 1, duration: 0.47, ease: "power3.out"}, 93.286);
+      tl.fromTo("#end-url", {opacity: 0}, {opacity: 1, duration: 0.3, ease: "none"}, 93.736);
       window.__timelines["main"] = tl;
-      tl.seek(0);
     </script>
   </body>
 </html>

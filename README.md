@@ -40,7 +40,8 @@ from the pool.
 git clone --recurse-submodules https://github.com/egbujor-emmanuel/backstop
 cd backstop/contracts
 forge test --no-match-path "test/fork/*"                                       # 100 unit/fuzz tests + 6 invariants
-forge test --match-path "test/fork/*" --fork-url https://rpc.test.mezo.org -vv  # full lifecycle on the real Mezo testnet contracts
+forge test --match-contract MezoTestnetForkTest --fork-url https://rpc.test.mezo.org -vv                      # full lifecycle on Mezo testnet's real contracts
+forge test --match-contract MezoMainnetForkTest --fork-url https://mainnet.mezo.public.validationcloud.io -vv  # the same lifecycle on Mezo MAINNET's real contracts (local fork, no funds move)
 ```
 
 ### Reproduce the mainnet data
@@ -174,6 +175,15 @@ claimants bond in MUSD. veMEZO gets a new job: deciding claims, paid from premiu
 - veMEZO `depositFor` is permissionless: anyone can top up anyone's lock. A court that reads current weight can have a
   vote erased by a stranger's top-up; reading weight at `filedAt − 1` from history closes that.
 - veBTC `ownerOf` returns `address(0)` for unknown ids instead of reverting.
+- Two contracts on Mezo mainnet call themselves veBTC. The one in `mezo-org/tigris`
+  `deployments/mainnet/VeBTC.json` (`0x7D80…5914`) holds 0.00096 BTC across 22 locks. The live veBTC is
+  `0x3D4b1b884A7a1E59fE8589a3296EC8f8cBB6f279` (789 BTC, 6,179 locks): on Oct 5 its lock #826 held exactly the
+  3.366676916 BTC the incident report lists as drained. BACKSTOP's first veBTC product named the stale address, so
+  it was paused (its policy keeps its terms) and product #5 names the live one.
+- Mainnet addresses used by the fork test, each checked on chain: MUSD `0xdD468A1DDc392dcdbEf6db6e34E89AA338F9F186`,
+  sMUSD `0xb4D498029af77680cD1eF828b967f010d06C51CC` (`yieldToken()` is MUSD), PriceFeed
+  `0xc5aC5A8892230E0A3e1c473881A2de7353fFcA88`, TroveManager `0x94AfB503dBca74aC3E4929BACEeDfCe19B93c193`, veMEZO
+  `0xb90fdAd3DFD180458D62Cc6acedc983D78E20122` (locks MEZO, 99.8M voting power).
 - Mezo's Skip BTC/USD oracle (`0x7b7c…0015`) is a native precompile: Foundry fork tests must serve its live value.
 
 ## Proof on Mezo testnet
@@ -236,6 +246,7 @@ before the security reviews below; its log is kept in [`proof/testnet.jsonl`](pr
 | `StarterKit.t.sol` | One kit per address, relayer-only, sweep | 4 passed |
 | `Invariants.t.sol` | Cover always fully backed; pool, product, policy and per-position accounting always agree; `parked` matches sMUSD; court holds every bond, reward and its pool | 6 invariants, 256 runs × 64 calls, 0 reverts |
 | `fork/MezoTestnetFork.t.sol` | Full lifecycle against the real MUSD, sMUSD, TroveManager, PriceFeed, veBTC and veMEZO on testnet; `finalize` including the sMUSD payout measured at 278,492 gas | passed |
+| `fork/MezoMainnetFork.t.sol` | The same lifecycle on a fork of **Mezo mainnet**: capital parked in mainnet sMUSD, cover for a real trove owner at the live PriceFeed price, cover for real lock #1029 in the live veBTC (insurable value 1,290 MUSD), a claim decided by real veMEZO lock #61 with its mainnet checkpoint weight (911,427), payout from mainnet sMUSD in 297,155 gas, underwriter exit | passed |
 
 ## Security review trail
 

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Instrument Serif";
+        src: url("assets/fonts/instrument-serif-latin-400-normal.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Instrument Serif";
+        src: url("assets/fonts/instrument-serif-latin-400-italic.woff2") format("woff2");
+        font-weight: 400;
+        font-style: italic;
+      }
+      :root {
+        --ink: #0b0d0c;
+        --paper: #ecebe4;
+        --muted: #a3a197;
+        --amber: #f5a524;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--ink); }
+      #root { position: relative; width: 1920px; height: 1080px; background: var(--ink); font-family: "Inter", sans-serif; }
+      .ground { position: absolute; inset: 0; background: var(--ink); }
+      .footage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+
+      /* Step label: sits above the caption band, inside the action-safe box. */
+      .label-host { position: absolute; left: 96px; bottom: 236px; width: auto; height: auto; }
+      .label {
+        display: inline-flex; align-items: center; gap: 14px; padding: 14px 22px 14px 0;
+        background: rgba(11, 13, 12, 0.92); border: 1px solid #2a2f2b; border-radius: 14px; overflow: hidden;
+        font-family: "JetBrains Mono", monospace; font-size: 22px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--paper);
+      }
+      .label-stripe {
+        display: block; width: 14px; align-self: stretch; margin-right: 6px;
+        background-image: repeating-linear-gradient(-45deg, var(--amber) 0 10px, transparent 10px 20px);
+      }
+      .label-num { color: var(--amber); }
+      .label-sep { color: var(--muted); }
+
+      /* Captions: one line group at a time, inside title-safe, never moving while read. */
+      .cap-host { position: absolute; left: 0; right: 0; bottom: 108px; display: flex; justify-content: center; }
+      .cap {
+        max-width: 1400px; padding: 16px 28px; border-radius: 18px; background: rgba(11, 13, 12, 0.86);
+        font-family: "Inter", sans-serif; font-weight: 500; font-size: 34px; line-height: 1.25; color: var(--paper); text-align: center;
+      }
+
+      /* Hook number over the October 5 positions. */
+      .hook-host { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; padding-right: 150px; }
+      .hook-num {
+        font-family: "Instrument Serif", serif; font-size: 220px; line-height: 1; letter-spacing: -0.01em; color: var(--amber);
+        background: rgba(11, 13, 12, 0.88); padding: 24px 48px 34px; border-radius: 24px;
+      }
+
+      /* End card. */
+      .end-host { position: absolute; inset: 0; background: var(--ink); display: flex; flex-direction: column; justify-content: center; padding-left: 192px; }
+      .end-stripe {
+        position: absolute; left: 0; right: 0; top: 0; height: 18px; transform-origin: left center;
+        background-image: repeating-linear-gradient(-45deg, var(--amber) 0 14px, transparent 14px 28px);
+      }
+      .end-mark { font-family: "Instrument Serif", serif; font-size: 72px; letter-spacing: 0.02em; color: var(--paper); }
+      .end-line { margin-top: 24px; max-width: 1400px; font-family: "Instrument Serif", serif; font-size: 120px; line-height: 1.02; letter-spacing: -0.01em; color: var(--paper); }
+      .end-line em { color: var(--amber); }
+      .end-url { margin-top: 48px; font-family: "JetBrains Mono", monospace; font-size: 30px; letter-spacing: 0.04em; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="{{TOTAL}}" data-width="1920" data-height="1080">
+      <div class="ground"></div>
+      {{VIDEOS}}
+      {{AUDIOS}}
+      {{HOOK}}
+      {{LABELS}}
+      <div id="captions" data-track-kind="captions">
+        {{CAPTIONS}}
+      </div>
+      {{END}}
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      {{TWEENS}}
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1 @@
+All of it runs on Mezo testnet: verified contracts, a hundred tests and six invariants, three security reviews, and every transaction linked.

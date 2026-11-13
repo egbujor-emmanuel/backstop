@@ -58,7 +58,7 @@ contract Deploy is Script {
         // cannot back a failure of MUSD itself.
         pm.addProduct(
             "veBTC lock: VotingEscrow exploit",
-            "veBTC 0x7D807e9CE1ef73048FEe9A4214e75e894ea25914 (mainnet) / 0xB63fcCd03521Cf21907627bd7fA465C129479231 (testnet)",
+            "veBTC 0x3D4b1b884A7a1E59fE8589a3296EC8f8cBB6f279 (mainnet, the escrow drained on 2026-10-05) / 0xB63fcCd03521Cf21907627bd7fA465C129479231 (testnet)",
             300,
             PolicyManager.PositionKind.VEBTC,
             1_000e18,

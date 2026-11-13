@@ -1,1 +1,1 @@
-Some failures a contract can't see. During the October sixth halt, blocks kept coming while transactions stopped. So halts go to the court, with on-chain evidence.
+Everything you just saw is real, on Mezo testnet. The proof page lists every contract and every transaction, so anyone can check it.
