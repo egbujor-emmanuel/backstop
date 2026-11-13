@@ -1,0 +1,74 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.28;
+
+import {Test} from "forge-std/Test.sol";
+import {ChainHaltMonitor} from "../src/ChainHaltMonitor.sol";
+
+contract ChainHaltMonitorTest is Test {
+    ChainHaltMonitor internal monitor;
+
+    function setUp() public {
+        vm.warp(1_800_000_000);
+        vm.roll(1_000_000);
+        monitor = new ChainHaltMonitor(1 hours, 300, 10 minutes);
+    }
+
+    function test_regularPokesRecordNothing() public {
+        for (uint256 i; i < 6; i++) {
+            vm.warp(block.timestamp + 10 minutes);
+            vm.roll(block.number + 200); // ~3s blocks
+            assertFalse(monitor.poke());
+        }
+        assertEq(monitor.haltCount(), 0);
+    }
+
+    function test_keeperOfflineIsNotAHalt() public {
+        // 6 hours without pokes, but the chain kept producing blocks.
+        vm.warp(block.timestamp + 6 hours);
+        vm.roll(block.number + 7_200);
+        assertFalse(monitor.poke());
+        assertEq(monitor.haltCount(), 0);
+    }
+
+    function test_haltIsRecordedWithConservativeDuration() public {
+        uint256 start = block.timestamp;
+        vm.warp(block.timestamp + 5.5 hours);
+        vm.roll(block.number + 1); // the first block after the restart
+        assertTrue(monitor.poke());
+        ChainHaltMonitor.Halt memory h = monitor.halts(0);
+        assertEq(h.start, start);
+        assertEq(h.end, block.timestamp);
+        assertEq(h.duration, 5.5 hours - 10 minutes);
+        assertEq(h.blocksInGap, 1);
+    }
+
+    function test_shortGapIsIgnored() public {
+        vm.warp(block.timestamp + 59 minutes);
+        vm.roll(block.number + 1);
+        assertFalse(monitor.poke());
+    }
+
+    function test_isHaltRule() public view {
+        assertTrue(monitor.isHalt(2 hours, 0));
+        assertTrue(monitor.isHalt(2 hours, 24)); // 300 s per block
+        assertFalse(monitor.isHalt(2 hours, 25));
+        assertFalse(monitor.isHalt(30 minutes, 0));
+    }
+
+    function test_badConfigReverts() public {
+        vm.expectRevert(ChainHaltMonitor.BadConfig.selector);
+        new ChainHaltMonitor(0, 300, 0);
+        vm.expectRevert(ChainHaltMonitor.BadConfig.selector);
+        new ChainHaltMonitor(1 hours, 0, 10 minutes);
+        vm.expectRevert(ChainHaltMonitor.BadConfig.selector);
+        new ChainHaltMonitor(1 hours, 300, 1 hours);
+    }
+
+    function testFuzz_liveChainNeverRecordsHalt(uint256 gap, uint256 blockTime) public {
+        gap = bound(gap, 1, 30 days);
+        blockTime = bound(blockTime, 1, 60); // any live block time up to a minute
+        vm.warp(block.timestamp + gap);
+        vm.roll(block.number + gap / blockTime + 1);
+        assertFalse(monitor.poke());
+    }
+}

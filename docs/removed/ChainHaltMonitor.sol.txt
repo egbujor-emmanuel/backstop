@@ -1,0 +1,88 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.28;
+
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
+/// @title ChainHaltMonitor
+/// @notice Detects halts of the chain it runs on, from inside the chain. Anyone may poke().
+/// A keeper pokes every few minutes. A contract cannot observe time passing while no blocks
+/// are produced, but the first block after a halt can: its timestamp jumps while block.number
+/// barely moves. A large time gap with a normal block count only means nobody poked (keeper
+/// offline), so it is not a halt.
+/// @dev On 2026-10-06 Mezo halted all transactions for about 5.5 hours after the veBTC exploit
+/// (see the Mezo incident report of 2026-10-07). The backtest in /backtest replays that halt
+/// from mainnet block data against these exact rules.
+contract ChainHaltMonitor {
+    struct Halt {
+        uint64 start; // timestamp of the last poke before the gap
+        uint64 end; // timestamp of the first block that recorded the gap
+        uint64 duration; // conservative: gap minus the expected poke interval
+        uint64 blocksInGap; // blocks produced between the two pokes
+    }
+
+    /// @notice A gap shorter than this is never a halt.
+    uint256 public immutable minGap;
+    /// @notice Average seconds per block inside the gap must be at least this for a halt.
+    uint256 public immutable minAvgBlockInterval;
+    /// @notice Expected poke interval, subtracted from every gap so the recorded duration
+    /// never overstates the halt.
+    uint256 public immutable pokeInterval;
+
+    uint64 public lastPokeTime;
+    uint64 public lastPokeBlock;
+
+    Halt[] private _halts;
+
+    event Poked(address indexed by, uint256 gap, uint256 blocksElapsed);
+    event HaltRecorded(uint256 indexed haltId, uint256 start, uint256 end, uint256 duration, uint256 blocksInGap);
+
+    error BadConfig();
+
+    constructor(uint256 minGap_, uint256 minAvgBlockInterval_, uint256 pokeInterval_) {
+        if (minGap_ == 0 || minAvgBlockInterval_ == 0 || pokeInterval_ >= minGap_) revert BadConfig();
+        minGap = minGap_;
+        minAvgBlockInterval = minAvgBlockInterval_;
+        pokeInterval = pokeInterval_;
+        lastPokeTime = SafeCast.toUint64(block.timestamp);
+        lastPokeBlock = SafeCast.toUint64(block.number);
+    }
+
+    /// @notice Record a heartbeat; records a halt if the gap since the last poke was one.
+    function poke() external returns (bool haltRecorded) {
+        uint256 gap = block.timestamp - lastPokeTime;
+        uint256 blocksElapsed = block.number - lastPokeBlock;
+        emit Poked(msg.sender, gap, blocksElapsed);
+
+        if (isHalt(gap, blocksElapsed)) {
+            uint256 duration = gap - pokeInterval;
+            _halts.push(
+                Halt({
+                    start: lastPokeTime,
+                    end: SafeCast.toUint64(block.timestamp),
+                    duration: SafeCast.toUint64(duration),
+                    blocksInGap: SafeCast.toUint64(blocksElapsed)
+                })
+            );
+            emit HaltRecorded(_halts.length - 1, lastPokeTime, block.timestamp, duration, blocksElapsed);
+            haltRecorded = true;
+        }
+
+        lastPokeTime = SafeCast.toUint64(block.timestamp);
+        lastPokeBlock = SafeCast.toUint64(block.number);
+    }
+
+    /// @notice The halt rule, exposed so the backtest and UI apply the same logic.
+    function isHalt(uint256 gap, uint256 blocksElapsed) public view returns (bool) {
+        if (gap < minGap) return false;
+        uint256 blocks = blocksElapsed == 0 ? 1 : blocksElapsed;
+        return gap / blocks >= minAvgBlockInterval;
+    }
+
+    function haltCount() external view returns (uint256) {
+        return _halts.length;
+    }
+
+    function halts(uint256 haltId) external view returns (Halt memory) {
+        return _halts[haltId];
+    }
+}
