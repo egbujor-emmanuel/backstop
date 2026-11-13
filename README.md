@@ -28,9 +28,9 @@ from the pool.
    *Every policy sold*.
 4. **Underwrite.** On [Underwrite](https://backstop-pearl.vercel.app/#/underwrite), deposit MUSD. 90% of it lands in
    Mezo's sMUSD savings vault immediately. Request a withdrawal and watch the one-hour testnet cooldown count down.
-5. **Watch the court.** [Claims court](https://backstop-pearl.vercel.app/#/claims) shows an approved claim and a
-   rejected claim, each with its evidence, veMEZO votes and reward pot. If you hold a veMEZO lock on testnet, you can
-   vote on open claims.
+5. **Watch the court.** [Claims court](https://backstop-pearl.vercel.app/#/claims) shows three decided claims: a
+   veBTC claim and a Tigris claim approved and paid, and a halt claim rejected, each with its evidence, veMEZO votes and
+   reward pot. If you hold a veMEZO lock on testnet, you can vote on open claims.
 6. **See the data.** [Oct 5 replay](https://backstop-pearl.vercel.app/#/replay) and
    [Proof](https://backstop-pearl.vercel.app/#/proof) list every number's on-chain source.
 
@@ -188,8 +188,10 @@ claimants bond in MUSD. veMEZO gets a new job: deciding claims, paid from premiu
 
 ## Proof on Mezo testnet
 
-Every wallet below is a BACKSTOP team wallet and is labelled as one in the app. The two claims are drills, labelled as
-drills in their evidence documents ([DRILL-001](docs/drills/DRILL-001.md), [DRILL-002](docs/drills/DRILL-002.md)).
+Every wallet below is a BACKSTOP team wallet and is labelled as one in the app. The three claims are drills, labelled
+as drills in their evidence documents: [DRILL-001](docs/drills/DRILL-001.md) (Tigris pools, approved and paid),
+[DRILL-002](docs/drills/DRILL-002.md) (transaction halt, rejected) and [DRILL-003](docs/drills/DRILL-003.md) (veBTC
+cover on a lock in Mezo's real veBTC contract, approved and paid).
 This is the run on the current contracts (v2.2); every row links the full transaction on the Mezo testnet explorer.
 
 <!-- PROOF-TABLE:START -->
@@ -228,6 +230,11 @@ This is the run on the current contracts (v2.2); every row links the full transa
 | 31 | DRILL-003: veBTC lock holder files 100 MUSD claim on policy #8 | [`0x9de6a062…50e0`](https://explorer.test.mezo.org/tx/0x9de6a062803eb94a141387eec3c2df6f9366959c616cf280fb4c8b11d3a150e0) |
 | 32 | assessor A (veMEZO #952) votes APPROVE on claim #2 (DRILL-003) | [`0x604f7b28…6053`](https://explorer.test.mezo.org/tx/0x604f7b28d6a56a377725f44409d211ac8d5d0866a67218512a15cc4450586053) |
 | 33 | assessor B (veMEZO #953) votes APPROVE on claim #2 (DRILL-003) | [`0x915d5696…7f1d`](https://explorer.test.mezo.org/tx/0x915d569618bfcaf867209e81328d6ff68ddb584598d46a58892bd5a82b3d7f1d) |
+| 34 | owner adds veBTC product #5 naming the live mainnet veBTC 0x3D4b...f279 (the escrow drained on Oct 5) | [`0xbb839400…b3be`](https://explorer.test.mezo.org/tx/0xbb8394007b7abd478f9619b334c26df460026519aad8f80ef6c9ddb66ecfb3be) |
+| 35 | owner stops new sales of product #0, whose terms named a stale mainnet veBTC; policy #8 keeps its terms | [`0xb36254fe…bedf`](https://explorer.test.mezo.org/tx/0xb36254fe703355dbdb8ba8295fd009f4ce4a2c7ddb662de180eff35f7f8dbedf) |
+| 36 | finalize claim #2 (DRILL-003): approved, 100 MUSD paid to the veBTC lock holder | [`0x0e544aa1…c9af`](https://explorer.test.mezo.org/tx/0x0e544aa1751d64fb115d0960f2988d4658ff3d145ea0655f28aef6d46c5bc9af) |
+| 37 | assessor reward paid: claim #2, veMEZO #952 | [`0x923876b7…0416`](https://explorer.test.mezo.org/tx/0x923876b7142a05fe928d129b5c9c9504cc26eb8fb38609449b2c5cd30fad0416) |
+| 38 | assessor reward paid: claim #2, veMEZO #953 | [`0xd9a2cb46…81e7`](https://explorer.test.mezo.org/tx/0xd9a2cb46af9109aa8ada8504c816ab618d42f268ccf8b8fb00a21de063d481e7) |
 <!-- PROOF-TABLE:END -->
 
 The machine-readable log is [`proof/testnet-v2.jsonl`](proof/testnet-v2.jsonl), produced by

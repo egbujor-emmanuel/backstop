@@ -31,3 +31,8 @@
 {"label":"DRILL-003: veBTC lock holder files 100 MUSD claim on policy #8","tx":"0x9de6a062803eb94a141387eec3c2df6f9366959c616cf280fb4c8b11d3a150e0","ts":1794588847}
 {"label":"assessor A (veMEZO #952) votes APPROVE on claim #2 (DRILL-003)","tx":"0x604f7b28d6a56a377725f44409d211ac8d5d0866a67218512a15cc4450586053","ts":1794588864}
 {"label":"assessor B (veMEZO #953) votes APPROVE on claim #2 (DRILL-003)","tx":"0x915d569618bfcaf867209e81328d6ff68ddb584598d46a58892bd5a82b3d7f1d","ts":1794588874}
+{"label":"owner adds veBTC product #5 naming the live mainnet veBTC 0x3D4b...f279 (the escrow drained on Oct 5)","tx":"0xbb8394007b7abd478f9619b334c26df460026519aad8f80ef6c9ddb66ecfb3be","ts":1794591418}
+{"label":"owner stops new sales of product #0, whose terms named a stale mainnet veBTC; policy #8 keeps its terms","tx":"0xb36254fe703355dbdb8ba8295fd009f4ce4a2c7ddb662de180eff35f7f8dbedf","ts":1794591418}
+{"label":"finalize claim #2 (DRILL-003): approved, 100 MUSD paid to the veBTC lock holder","tx":"0x0e544aa1751d64fb115d0960f2988d4658ff3d145ea0655f28aef6d46c5bc9af","ts":1794592473}
+{"label":"assessor reward paid: claim #2, veMEZO #952","tx":"0x923876b7142a05fe928d129b5c9c9504cc26eb8fb38609449b2c5cd30fad0416","ts":1794592580,"source":"recovered from the RewardPaid event; the RPC dropped the receipt"}
+{"label":"assessor reward paid: claim #2, veMEZO #953","tx":"0xd9a2cb46af9109aa8ada8504c816ab618d42f268ccf8b8fb00a21de063d481e7","ts":1794592552}

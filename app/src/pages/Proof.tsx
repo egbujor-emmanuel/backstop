@@ -92,9 +92,9 @@ export default function Proof() {
       <section aria-labelledby="txs" className="mt-16">
         <h2 id="txs" className="font-display text-3xl">Lifecycle transactions</h2>
         <p className="mt-2 text-sm text-muted">
-          The run on the current contracts: underwriting, three policies, an approved claim (DRILL-001) and a rejected
-          claim (DRILL-002), assessor votes, rewards and the underwriter's exit. Drills are labelled as drills in their
-          evidence documents.
+          The run on the current contracts: underwriting, policies, two approved and paid claims (DRILL-001 on Tigris
+          pools, DRILL-003 on a lock in Mezo&apos;s real veBTC contract) and a rejected claim (DRILL-002), assessor votes,
+          rewards and the underwriter&apos;s exit. Drills are labelled as drills in their evidence documents.
         </p>
         <ol className="mt-6 flex flex-col divide-y divide-line border-y border-line">
           {PROOF.map((p, i) => (

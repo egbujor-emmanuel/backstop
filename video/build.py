@@ -14,7 +14,7 @@ import subprocess
 
 HERE = pathlib.Path(__file__).resolve().parent
 LEAD, TAIL, END_HOLD = 0.5, 0.7, 2.5
-MAX_SPEED = 3.2
+MAX_SPEED = 6.0  # a scene must keep its ending (the confirmation), so long waits fast-forward
 STEP_LABELS = {"s3": "Step 1 · Connect", "s4": "Step 2 · Buy cover", "s5": "Step 3 · Underwrite",
                "s6": "Step 4 · File a claim", "s7": "Step 5 · veMEZO holders decide", "s8": "Check it yourself"}
 
