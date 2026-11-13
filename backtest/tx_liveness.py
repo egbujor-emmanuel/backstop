@@ -8,6 +8,7 @@ consecutive blocks with zero EVM transactions. Reads public chain data only.
 import datetime as dt
 import json
 import sys
+import time
 import urllib.request
 
 RPC = sys.argv[1]
@@ -17,15 +18,23 @@ BUCKET = 60 * (int(sys.argv[4]) if len(sys.argv) > 4 else 30)
 BATCH = 50
 
 
-def rpc(calls: list) -> list:
+def rpc(calls: list, attempts: int = 5) -> list:
     body = json.dumps([
         {"jsonrpc": "2.0", "id": i, "method": m, "params": p} for i, (m, p) in enumerate(calls)
     ]).encode()
     req = urllib.request.Request(
         RPC, data=body, headers={"content-type": "application/json", "user-agent": "backstop-backtest"}
     )
-    with urllib.request.urlopen(req, timeout=60) as r:
-        out = json.load(r)
+    for attempt in range(attempts):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                out = json.load(r)
+            break
+        except Exception as exc:  # public RPCs drop connections under load; retry with backoff
+            if attempt == attempts - 1:
+                raise
+            print(f"rpc retry {attempt + 1}: {exc}", file=sys.stderr)
+            time.sleep(2 * (attempt + 1))
     out.sort(key=lambda x: x["id"])
     for o in out:
         if "error" in o:
@@ -80,3 +89,31 @@ full = lambda t: dt.datetime.fromtimestamp(t, dt.timezone.utc).strftime("%Y-%m-%
 print(f"\nLongest stretch with no EVM transaction: block {longest_a[0]} ({full(longest_a[1])} UTC) "
       f"-> block {longest_b[0]} ({full(longest_b[1])} UTC) = {d}s ({d / 3600:.2f}h), "
       f"{longest_b[0] - longest_a[0] - 1} empty blocks in between")
+
+if len(sys.argv) > 5:
+    out = {
+        "rpc": RPC,
+        "from": sys.argv[2],
+        "to": sys.argv[3],
+        "bucketMinutes": BUCKET // 60,
+        "firstBlock": b0,
+        "lastBlock": b1,
+        "buckets": [
+            {
+                "start": T0 + k * BUCKET,
+                "blocks": len(buckets[k]),
+                "evmTxs": sum(n for *_, n in buckets[k]),
+            }
+            for k in sorted(buckets)
+        ],
+        "longestEmpty": {
+            "fromBlock": longest_a[0],
+            "fromTime": longest_a[1],
+            "toBlock": longest_b[0],
+            "toTime": longest_b[1],
+            "seconds": d,
+        },
+    }
+    with open(sys.argv[5], "w") as f:
+        json.dump(out, f, indent=1)
+    print("wrote", sys.argv[5])

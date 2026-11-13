@@ -12,3 +12,10 @@
 {"label": "assessor B (veMEZO #953) votes APPROVE on claim #0", "tx": "0xde2b0e6d550c7921b8dccbc2922a24da8098fac2c91955fe3ef2906df92d8d47", "ts": 1794541932}
 {"label": "assessor A (veMEZO #952) votes REJECT on claim #1", "tx": "0xb5a7bbff66f743ba7b717a4b724cb9d7cfa41f553e33bc0c2f4501a3252ea215", "ts": 1794541948}
 {"label": "assessor B (veMEZO #953) votes REJECT on claim #1", "tx": "0x44519179f28fee852214789e35f1c7803a54ee4cdb4e14645e461d3f86e508e3", "ts": 1794541962}
+{"label":"finalize claim #0 (DRILL-001): approved, 150 MUSD paid","tx":"0xe12a5ae0626cbdf4d73597c2ca0b86ed1119213b99d2afb065356382b01505ef","ts":1794562900}
+{"label":"DRILL-002: finalize claim #1, rejected, bond to assessors","tx":"0x9141ac2c3b2471934f76f94fe3db90a9adafa830f50749093d06923d4c6f66c0","ts":1794562989}
+{"label":"assessor reward paid: claim #0, veMEZO #952","tx":"0xd3003674cf4d125bc0d5c2bf65b81eecf6523fdb1f14e4b3611596a4e7a509bb","ts":1794562999}
+{"label":"assessor reward paid: claim #0, veMEZO #953","tx":"0xa6ea9ef8d59f32b7ebc4c9b8239dc2103c5bad46aaf816736830d96308388865","ts":1794563007}
+{"label":"assessor reward paid: claim #1, veMEZO #952","tx":"0xc1dd6b6963884dc502ba0cdb78623dc2a4448256d3793566595f5c69ad94fea5","ts":1794563014}
+{"label":"assessor reward paid: claim #1, veMEZO #953","tx":"0x08800dcf34f1dfaa0fd55cd072b455bc9f540938f000e37b8f18da62e7261996","ts":1794563027}
+{"label":"underwriter requests withdrawal of all shares (1h cooldown)","tx":"0x2fc374526f6170151663443305a7ec67b392318b68e9f4dba46b85e6e57dbce1","ts":1794563040}
