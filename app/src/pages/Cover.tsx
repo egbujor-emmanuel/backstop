@@ -21,7 +21,7 @@ export default function Cover() {
   const { balance, allowance, refetch: refetchMusd } = useMusd(address, ADDR.policyManager);
 
   const [productId, setProductId] = useState(2);
-  const [amount, setAmount] = useState("100");
+  const [amount, setAmount] = useState("10"); // the minimum: affordable from a starter kit, never above free capital
   const [days, setDays] = useState("30");
   const [positionId, setPositionId] = useState("");
 

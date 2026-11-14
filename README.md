@@ -235,6 +235,8 @@ This is the run on the current contracts (v2.2); every row links the full transa
 | 36 | finalize claim #2 (DRILL-003): approved, 100 MUSD paid to the veBTC lock holder | [`0x0e544aa1…c9af`](https://explorer.test.mezo.org/tx/0x0e544aa1751d64fb115d0960f2988d4658ff3d145ea0655f28aef6d46c5bc9af) |
 | 37 | assessor reward paid: claim #2, veMEZO #952 | [`0x923876b7…0416`](https://explorer.test.mezo.org/tx/0x923876b7142a05fe928d129b5c9c9504cc26eb8fb38609449b2c5cd30fad0416) |
 | 38 | assessor reward paid: claim #2, veMEZO #953 | [`0xd9a2cb46…81e7`](https://explorer.test.mezo.org/tx/0xd9a2cb46af9109aa8ada8504c816ab618d42f268ccf8b8fb00a21de063d481e7) |
+| 39 | underwriter approves pool for 200 MUSD (more capacity for visitors) | [`0x322d85f5…bea3`](https://explorer.test.mezo.org/tx/0x322d85f5a947a538b0dd40c0fbe064d5faff78e7ed1a75415a1167a6f257bea3) |
+| 40 | underwriter deposits 200 MUSD so visitors can buy cover | [`0xe26a8b51…9de9`](https://explorer.test.mezo.org/tx/0xe26a8b5114a0241958af19d98d5e58bd8eb463023757164f2aa160e387b49de9) |
 <!-- PROOF-TABLE:END -->
 
 The machine-readable log is [`proof/testnet-v2.jsonl`](proof/testnet-v2.jsonl), produced by
